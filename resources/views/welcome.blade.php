@@ -20,6 +20,9 @@
                     <p class="text-xs text-gray-600 mt-1">
                         {{ $event->event_date->format('F j, Y') }} · {{ $event->start_time }} - {{ $event->end_time }}
                     </p>
+                    @if($event->description)
+                        <p class="text-xs text-gray-500 mt-2">{{ $event->description }}</p>
+                    @endif
                 </article>
             @empty
                 <p class="text-sm text-gray-500 text-center py-6">No events have been published yet.</p>

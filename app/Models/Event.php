@@ -9,9 +9,12 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 class Event extends Model
 {
     protected $table = 'events';
+
     protected $primaryKey = 'event_id';
+
     public $timestamps = false;
-    protected $fillable = ['title', 'event_date', 'start_time', 'end_time', 'created_by'];
+
+    protected $fillable = ['title', 'description', 'event_date', 'start_time', 'end_time', 'created_by'];
 
     protected function casts(): array
     {

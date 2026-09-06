@@ -1,22 +1,28 @@
 @extends('layouts.admin')
 @section('title', 'Lost & Found Desk | USSC Admin')
 @section('content')
-<div><h2 class="text-2xl font-extrabold text-gray-900">Approve Lost & Found Reports</h2><p class="text-sm text-gray-500">Verify reports, mark claimed items, or reject invalid submissions.</p></div>
-<div class="grid grid-cols-1 gap-4 md:grid-cols-2">
-    @forelse($items as $item)
-        <article class="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
-            <div class="flex items-start justify-between gap-3"><div><span class="rounded-full bg-red-100 px-2 py-1 text-[10px] font-bold uppercase text-red-800">{{ $item->status }}</span><h3 class="mt-2 font-bold">{{ $item->item_name }}</h3><p class="text-xs text-gray-500">{{ $item->category }} · {{ $item->place }}</p></div><span class="text-xs text-gray-400">#{{ $item->item_id }}</span></div>
-            <p class="mt-3 text-sm text-gray-600">{{ $item->description }}</p>
-            <p class="mt-3 text-xs text-gray-500">Reported by {{ $item->poster?->name ?? 'Unknown user' }} · {{ $item->poster?->email }}</p>
-            <form method="POST" action="{{ route('admin.lost-found.update', $item) }}" class="mt-4 flex gap-2 border-t pt-3">
-                @csrf @method('PATCH')
-                <select name="status" class="min-w-0 flex-1 rounded-lg border px-2 py-2 text-xs"><option value="approved" @selected($item->status === 'approved')>Approve</option><option value="claimed" @selected($item->status === 'claimed')>Mark Claimed</option><option value="rejected" @selected($item->status === 'rejected')>Reject</option><option value="lost" @selected($item->status === 'lost')>Keep Lost</option><option value="found" @selected($item->status === 'found')>Keep Found</option></select>
-                <button class="rounded-lg bg-red-900 px-4 py-2 text-xs font-bold text-white hover:bg-red-800">Save</button>
-            </form>
-        </article>
-    @empty
-        <p class="col-span-full rounded-xl border bg-white p-10 text-center text-sm text-gray-500">No lost-and-found reports found.</p>
-    @endforelse
-</div>
-<div>{{ $items->links() }}</div>
+<div><h2 class="text-2xl font-extrabold text-gray-900">Approve Lost & Found Reports</h2><p class="text-sm text-gray-500">Review pending reports, then manage approved or rejected items separately.</p></div>
+<section class="space-y-4">
+    <div class="flex items-center justify-between"><div><h3 class="text-lg font-bold">Pending Reports</h3><p class="text-xs text-gray-500">These reports are not visible publicly yet.</p></div><span class="rounded-full bg-yellow-100 px-3 py-1 text-xs font-bold text-yellow-800">{{ $pendingItems->count() }} pending</span></div>
+    <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+        @forelse($pendingItems as $item)
+            @include('admin.partials.lost-found-item', ['item' => $item])
+        @empty
+            <p class="col-span-full rounded-xl border bg-white p-10 text-center text-sm text-gray-500">No pending reports.</p>
+        @endforelse
+    </div>
+</section>
+<section class="mt-8 space-y-4 border-t border-gray-200 pt-6">
+    <div class="flex items-center justify-between"><div><h3 class="text-lg font-bold">Approved / Rejected Reports</h3><p class="text-xs text-gray-500">Use Edit to change approval or item state.</p></div><span class="rounded-full bg-gray-100 px-3 py-1 text-xs font-bold text-gray-700">{{ $processedItems->count() }} processed</span></div>
+    <div class="space-y-3">
+        @forelse($processedItems as $item)
+            <article class="rounded-xl border border-gray-200 bg-white p-4 shadow-sm"><div class="flex flex-col justify-between gap-3 sm:flex-row sm:items-center"><div><div><span class="rounded-full bg-red-100 px-2 py-1 text-[10px] font-bold uppercase text-red-800">{{ $item->status }}</span><span class="ml-1 rounded-full bg-gray-100 px-2 py-1 text-[10px] font-bold uppercase text-gray-700">{{ $item->approval_status }}</span></div><h3 class="mt-2 font-bold">{{ $item->item_name }}</h3><p class="text-xs text-gray-500">{{ $item->category }} · {{ $item->place }} · Submitted {{ $item->submitted_at?->format('M j, Y g:i A') ?? 'Unknown date' }}</p></div><button type="button" onclick="toggleItemEditor('item-editor-{{ $item->item_id }}')" class="rounded-lg border border-red-900 px-4 py-2 text-xs font-bold text-red-900 hover:bg-red-50">Edit</button></div><div id="item-editor-{{ $item->item_id }}" class="mt-4 hidden">@include('admin.partials.lost-found-item-form', ['item' => $item])</div></article>
+        @empty
+            <p class="rounded-xl border bg-white p-10 text-center text-sm text-gray-500">No approved or rejected reports yet.</p>
+        @endforelse
+    </div>
+</section>
 @endsection
+@push('scripts')
+<script>function toggleItemEditor(id){document.getElementById(id).classList.toggle('hidden');}</script>
+@endpush

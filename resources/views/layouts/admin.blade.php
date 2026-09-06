@@ -29,6 +29,7 @@
             <a href="{{ route('admin.documents') }}" class="whitespace-nowrap px-4 py-2.5 {{ request()->routeIs('admin.documents') ? 'border-b-2 border-yellow-400 text-yellow-400' : 'text-gray-200 hover:text-white' }}"><i class="fa-solid fa-file-signature mr-1"></i>Document Requests</a>
             <a href="{{ route('admin.lost-found') }}" class="whitespace-nowrap px-4 py-2.5 {{ request()->routeIs('admin.lost-found') ? 'border-b-2 border-yellow-400 text-yellow-400' : 'text-gray-200 hover:text-white' }}"><i class="fa-solid fa-boxes-packing mr-1"></i>Lost & Found</a>
             <a href="{{ route('admin.events') }}" class="whitespace-nowrap px-4 py-2.5 {{ request()->routeIs('admin.events') ? 'border-b-2 border-yellow-400 text-yellow-400' : 'text-gray-200 hover:text-white' }}"><i class="fa-solid fa-calendar-plus mr-1"></i>Events</a>
+            <a href="{{ route('admin.logs') }}" class="whitespace-nowrap px-4 py-2.5 {{ request()->routeIs('admin.logs') ? 'border-b-2 border-yellow-400 text-yellow-400' : 'text-gray-200 hover:text-white' }}"><i class="fa-solid fa-clock-rotate-left mr-1"></i>Activity Logs</a>
         </div>
     </nav>
 </header>
@@ -41,5 +42,6 @@
     @endif
     @yield('content')
 </main>
+@stack('scripts')
 </body>
 </html>

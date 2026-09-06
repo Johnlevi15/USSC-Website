@@ -29,6 +29,7 @@ class EventController extends Controller
     {
         $validated = $request->validate([
             'title' => ['required', 'string', 'max:150'],
+            'description' => ['nullable', 'string', 'max:5000'],
             'event_date' => ['required', 'date'],
             'start_time' => ['required', 'date_format:H:i'],
             'end_time' => ['required', 'date_format:H:i', 'after:start_time'],
@@ -67,6 +68,7 @@ class EventController extends Controller
     {
         $validated = $request->validate([
             'title' => ['sometimes', 'string', 'max:150'],
+            'description' => ['sometimes', 'nullable', 'string', 'max:5000'],
             'event_date' => ['sometimes', 'date'],
             'start_time' => ['sometimes', 'date_format:H:i'],
             'end_time' => ['sometimes', 'date_format:H:i'],

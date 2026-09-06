@@ -38,10 +38,20 @@
 
     <div id="gallery" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
         @foreach($items as $item)
-            <article class="item bg-white rounded-xl shadow-sm border p-4" data-status="{{ strtoupper($item->status) }}" data-text="{{ strtolower($item->item_name.' '.$item->category.' '.$item->description.' '.$item->place) }}">
+            <article class="item bg-white rounded-xl shadow-sm border p-4" data-status="{{ strtoupper($item->status) }}" data-text="{{ strtolower($item->item_name.' '.$item->category.' '.$item->description.' '.$item->place.' '.($item->poster?->name ?? '')) }}">
+                @if($item->image_path)
+                    <a href="{{ Storage::disk('public')->url($item->image_path) }}" target="_blank" rel="noopener" aria-label="View full image of {{ $item->item_name }}" class="block">
+                        <img src="{{ Storage::disk('public')->url($item->image_path) }}" alt="{{ $item->item_name }}" class="mx-auto mb-3 aspect-square h-32 w-32 cursor-zoom-in rounded-lg object-cover">
+                    </a>
+                @endif
                 <span class="text-[10px] font-bold text-red-900 bg-red-50 px-2 py-1 rounded">{{ strtoupper($item->status) }}</span>
                 <h3 class="text-sm font-bold mt-3">{{ $item->item_name }}</h3>
                 <p class="text-xs text-gray-600 mt-1"><i class="fa-solid fa-location-dot text-red-700 mr-1"></i>{{ $item->place }}</p>
+                <p class="text-xs text-gray-600 mt-2"><i class="fa-solid fa-user text-red-700 mr-1"></i>Reported by {{ $item->poster?->name ?? 'Unknown user' }}</p>
+                <p class="text-xs text-gray-400 mt-1">Submitted {{ $item->submitted_at?->format('M j, Y') ?? 'Unknown date' }}</p>
+                @if($item->description)
+                    <p class="text-xs text-gray-500 mt-2">{{ $item->description }}</p>
+                @endif
             </article>
         @endforeach
     </div>

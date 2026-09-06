@@ -19,11 +19,28 @@
             <a href="{{ route('lost-found') }}" class="px-3 py-2 {{ request()->routeIs('lost-found') ? 'border-b-2 border-yellow-400 text-yellow-400 font-bold' : 'hover:text-yellow-300' }}"><i class="fa-solid fa-box-archive text-xs"></i> Lost & Found</a>
             <a href="{{ route('document-request') }}" class="px-3 py-2 {{ request()->routeIs('document-request') ? 'border-b-2 border-yellow-400 text-yellow-400 font-bold' : 'hover:text-yellow-300' }}"><i class="fa-solid fa-file-lines text-xs"></i> Request Document</a>
             <a href="{{ route('track-request') }}" class="px-3 py-2 {{ request()->routeIs('track-request') ? 'border-b-2 border-yellow-400 text-yellow-400 font-bold' : 'hover:text-yellow-300' }}"><i class="fa-solid fa-route text-xs"></i> Track Request</a>
-            <a href="{{ route('admin-login') }}" class="px-3 py-2 {{ request()->routeIs('admin-login') ? 'border-b-2 border-yellow-400 text-yellow-400 font-bold' : 'hover:text-yellow-300' }}"><i class="fa-solid fa-user-shield text-xs"></i> Admin Login</a>
+            @auth
+                @if(auth()->user()->admin)
+                    <a href="{{ route('admin.dashboard') }}" class="px-3 py-2 {{ request()->routeIs('admin.*') ? 'border-b-2 border-yellow-400 text-yellow-400 font-bold' : 'hover:text-yellow-300' }}"><i class="fa-solid fa-gauge-high text-xs"></i> Admin Dashboard</a>
+                @else
+                    <a href="{{ route('admin-login') }}" class="px-3 py-2 {{ request()->routeIs('admin-login') ? 'border-b-2 border-yellow-400 text-yellow-400 font-bold' : 'hover:text-yellow-300' }}"><i class="fa-solid fa-user-shield text-xs"></i> Admin Login</a>
+                @endif
+            @else
+                <a href="{{ route('admin-login') }}" class="px-3 py-2 {{ request()->routeIs('admin-login') ? 'border-b-2 border-yellow-400 text-yellow-400 font-bold' : 'hover:text-yellow-300' }}"><i class="fa-solid fa-user-shield text-xs"></i> Admin Login</a>
+            @endauth
         </nav>
         <select class="md:hidden bg-red-950 border border-red-700 rounded px-2 py-1 text-xs" onchange="location.href=this.value" aria-label="Navigate">
             <option selected disabled>Menu</option>
-            <option value="{{ route('home') }}">Home</option><option value="{{ route('lost-found') }}">Lost & Found</option><option value="{{ route('document-request') }}">Request Document</option><option value="{{ route('track-request') }}">Track Request</option><option value="{{ route('admin-login') }}">Admin Login</option>
+            <option value="{{ route('home') }}">Home</option><option value="{{ route('lost-found') }}">Lost & Found</option><option value="{{ route('document-request') }}">Request Document</option><option value="{{ route('track-request') }}">Track Request</option>
+            @auth
+                @if(auth()->user()->admin)
+                    <option value="{{ route('admin.dashboard') }}">Admin Dashboard</option>
+                @else
+                    <option value="{{ route('admin-login') }}">Admin Login</option>
+                @endif
+            @else
+                <option value="{{ route('admin-login') }}">Admin Login</option>
+            @endauth
         </select>
     </div>
 </header>

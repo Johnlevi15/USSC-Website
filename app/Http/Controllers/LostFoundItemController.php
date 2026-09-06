@@ -7,6 +7,7 @@ use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
 
 class LostFoundItemController extends Controller
@@ -14,7 +15,10 @@ class LostFoundItemController extends Controller
     public function browse(): View
     {
         return view('lost-found', [
-            'items' => LostFoundItem::query()->latest('item_id')->get(),
+            'items' => LostFoundItem::with('poster')
+                ->where('approval_status', 'approved')
+                ->latest('item_id')
+                ->get(),
         ]);
     }
 
@@ -37,6 +41,7 @@ class LostFoundItemController extends Controller
                 'item_name' => ['required', 'string', 'max:150'],
                 'category' => ['required', 'string', 'max:100'],
                 'description' => ['required', 'string'],
+                'image' => ['sometimes', 'nullable', 'image', 'mimes:jpeg,jpg,png,webp', 'max:5120'],
                 'status' => ['required', 'in:lost,found'],
                 'place' => ['required', 'string', 'max:255'],
             ]);
@@ -48,16 +53,21 @@ class LostFoundItemController extends Controller
                 ],
             );
 
+            $imagePath = $request->file('image')?->store('lost-found', 'public');
+
             LostFoundItem::create([
                 'posted_by' => $user->id,
                 'item_name' => $validated['item_name'],
                 'category' => $validated['category'],
                 'description' => $validated['description'],
+                'image_path' => $imagePath,
                 'status' => $validated['status'],
+                'approval_status' => 'pending',
+                'submitted_at' => now(),
                 'place' => $validated['place'],
             ]);
 
-            return redirect()->route('lost-found')->with('success', 'Your item report was submitted successfully.');
+            return redirect()->route('lost-found')->with('success', 'Your item report was submitted for admin approval.');
         }
 
         $validated = $request->validate([
@@ -65,13 +75,17 @@ class LostFoundItemController extends Controller
             'item_name' => ['required', 'string', 'max:150'],
             'category' => ['required', 'string', 'max:100'],
             'description' => ['required', 'string'],
+            'image' => ['sometimes', 'nullable', 'image', 'mimes:jpeg,jpg,png,webp', 'max:5120'],
             'status' => ['sometimes', 'string', 'max:20'],
             'place' => ['required', 'string', 'max:255'],
         ]);
 
         $item = LostFoundItem::create([
             ...$validated,
+            'image_path' => $request->file('image')?->store('lost-found', 'public'),
             'status' => $validated['status'] ?? 'pending',
+            'approval_status' => 'pending',
+            'submitted_at' => now(),
         ]);
 
         return response()->json($item, 201);
@@ -88,12 +102,21 @@ class LostFoundItemController extends Controller
             'item_name' => ['sometimes', 'string', 'max:150'],
             'category' => ['sometimes', 'string', 'max:100'],
             'description' => ['sometimes', 'string'],
+            'image' => ['sometimes', 'nullable', 'image', 'mimes:jpeg,jpg,png,webp', 'max:5120'],
             'status' => ['sometimes', 'string', 'max:20'],
             'place' => ['sometimes', 'string', 'max:255'],
             'reviewed_by' => ['sometimes', 'nullable', 'integer', 'exists:admins,admin_id'],
         ]);
 
-        $lostFoundItem->update($validated);
+        unset($validated['image']);
+
+        if ($request->hasFile('image')) {
+            if ($lostFoundItem->image_path) {
+                Storage::disk('public')->delete($lostFoundItem->image_path);
+            }
+
+            $validated['image_path'] = $request->file('image')->store('lost-found', 'public');
+        }
 
         return response()->json($lostFoundItem->fresh(['poster', 'reviewer']));
     }
@@ -101,6 +124,10 @@ class LostFoundItemController extends Controller
     public function destroy(LostFoundItem $lostFoundItem): JsonResponse
     {
         $lostFoundItem->delete();
+
+        if ($lostFoundItem->image_path) {
+            Storage::disk('public')->delete($lostFoundItem->image_path);
+        }
 
         return response()->json(null, 204);
     }

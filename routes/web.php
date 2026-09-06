@@ -35,6 +35,7 @@ Route::middleware(['auth', 'admin'])->group(function (): void {
     Route::patch('/admin/lost-found/{lostFoundItem}', [AdminDashboardController::class, 'updateLostFound'])->name('admin.lost-found.update');
     Route::get('/admin/events', [AdminDashboardController::class, 'events'])->name('admin.events');
     Route::post('/admin/events', [AdminDashboardController::class, 'storeEvent'])->name('admin.events.store');
+    Route::get('/admin/logs', [AdminDashboardController::class, 'logs'])->name('admin.logs');
 
     Route::resource('document-requests', DocumentRequestController::class)
         ->parameters(['document-requests' => 'documentRequest'])

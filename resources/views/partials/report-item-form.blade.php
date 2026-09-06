@@ -16,7 +16,7 @@
         </div>
     </div>
 
-    <form method="POST" action="{{ route('report-item.store') }}" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <form method="POST" action="{{ route('report-item.store') }}" enctype="multipart/form-data" class="grid grid-cols-1 md:grid-cols-2 gap-4">
         @csrf
         <label class="block text-xs font-bold text-gray-600 uppercase">
             Name
@@ -46,6 +46,11 @@
         <label class="block text-xs font-bold text-gray-600 uppercase md:col-span-2">
             Description
             <textarea required name="description" rows="3" class="mt-1 w-full px-3 py-2 text-sm border rounded-lg">{{ old('description') }}</textarea>
+        </label>
+
+        <label class="block text-xs font-bold text-gray-600 uppercase md:col-span-2">
+            Picture <span class="font-normal normal-case text-gray-400">(optional, maximum 5 MB)</span>
+            <input type="file" name="image" accept="image/jpeg,image/png,image/webp" class="mt-1 w-full px-3 py-2 text-sm border rounded-lg bg-white">
         </label>
 
         <input type="hidden" name="status" id="status" value="{{ old('status', request('type', 'found')) }}">
