@@ -10,7 +10,7 @@ class LostFoundItem extends Model
     protected $table = 'lost_found_items';
     protected $primaryKey = 'item_id';
     public $timestamps = false;
-    protected $fillable = ['posted_by', 'item_name', 'category', 'description', 'status', 'reviewed_by'];
+    protected $fillable = ['posted_by', 'item_name', 'category', 'description', 'status', 'place', 'reviewed_by'];
 
     public function poster(): BelongsTo
     {
