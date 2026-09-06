@@ -7,10 +7,20 @@
             <h2 class="text-lg font-bold">Campus Lost & Found Gallery</h2>
             <p class="text-xs text-gray-500">Browse reported items or submit a report for missing items.</p>
         </div>
-        <div class="flex gap-2">
-            <a href="{{ route('report-item', ['type' => 'lost']) }}" class="px-3 py-1.5 bg-yellow-600 text-white text-xs rounded-lg font-bold">REPORT LOST</a>
-            <a href="{{ route('report-item', ['type' => 'found']) }}" class="px-3 py-1.5 bg-red-900 text-white text-xs rounded-lg font-bold">REPORT FOUND</a>
-        </div>
+        <button
+            type="button"
+            id="report-toggle"
+            onclick="toggleReportForm()"
+            aria-controls="report-form"
+            aria-expanded="false"
+            class="px-3 py-1.5 bg-red-900 text-white text-xs rounded-lg font-bold"
+        >
+            REPORT AN ITEM
+        </button>
+    </div>
+
+    <div id="report-form" class="hidden">
+        @include('partials.report-item-form')
     </div>
 
     <div class="bg-white p-3 rounded-xl border shadow-sm">
@@ -22,17 +32,16 @@
         </div>
     </div>
 
+    @if(session('success'))
+        <div class="bg-green-50 border border-green-200 text-green-800 rounded-lg px-4 py-3 text-sm">{{ session('success') }}</div>
+    @endif
+
     <div id="gallery" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        @foreach([
-            ['FOUND', 'Black Samsung Smartphone', 'Found in CLIRDEC'],
-            ['FOUND', 'White Wireless Earbuds', 'Found in Main Library'],
-            ['LOST', 'Brown Leather Wallet & CLSU ID', 'Lost near College of Engineering'],
-            ['LOST', 'Matte Black Hydroflask Tumbler', 'Lost at University Gymnasium'],
-        ] as $item)
-            <article class="item bg-white rounded-xl shadow-sm border p-4" data-status="{{ $item[0] }}" data-text="{{ strtolower(implode(' ', $item)) }}">
-                <span class="text-[10px] font-bold text-red-900 bg-red-50 px-2 py-1 rounded">{{ $item[0] }}</span>
-                <h3 class="text-sm font-bold mt-3">{{ $item[1] }}</h3>
-                <p class="text-xs text-gray-600 mt-1"><i class="fa-solid fa-location-dot text-red-700 mr-1"></i>{{ $item[2] }}</p>
+        @foreach($items as $item)
+            <article class="item bg-white rounded-xl shadow-sm border p-4" data-status="{{ strtoupper($item->status) }}" data-text="{{ strtolower($item->item_name.' '.$item->category.' '.$item->description.' '.$item->place) }}">
+                <span class="text-[10px] font-bold text-red-900 bg-red-50 px-2 py-1 rounded">{{ strtoupper($item->status) }}</span>
+                <h3 class="text-sm font-bold mt-3">{{ $item->item_name }}</h3>
+                <p class="text-xs text-gray-600 mt-1"><i class="fa-solid fa-location-dot text-red-700 mr-1"></i>{{ $item->place }}</p>
             </article>
         @endforeach
     </div>

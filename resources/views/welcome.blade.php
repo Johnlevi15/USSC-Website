@@ -10,23 +10,20 @@
     </section>
     <section class="bg-white rounded-xl shadow-sm border p-6">
         <div class="flex justify-between items-center border-b pb-3 mb-4">
-            <h3 class="font-bold text-lg text-red-900"><i class="fa-solid fa-calendar-days"></i> UNIVERSITY CALENDAR</h3>
-            <span class="text-xs font-semibold bg-red-50 text-red-900 px-3 py-1 rounded-full">August 2026</span>
+            <h3 class="font-bold text-lg text-red-900"><i class="fa-solid fa-calendar-days"></i> UNIVERSITY EVENTS</h3>
+            <span class="text-xs font-semibold bg-red-50 text-red-900 px-3 py-1 rounded-full">{{ now()->format('F Y') }}</span>
         </div>
-        <div class="grid grid-cols-7 text-center bg-yellow-100 text-xs font-bold text-red-950">
-            @foreach(['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'] as $day)
-                <div class="py-2">{{ $day }}</div>
-            @endforeach
-        </div>
-        <div class="grid grid-cols-7 gap-px bg-gray-200 text-xs">
-            @for($day = 1; $day <= 31; $day++)
-                <div class="bg-white min-h-16 p-2 font-bold">
-                    {{ $day }}
-                    @if($day === 18)
-                        <span class="block mt-1 p-1 bg-red-900 text-white text-[10px] rounded">Intramurals Opening</span>
-                    @endif
-                </div>
-            @endfor
+        <div class="space-y-3">
+            @forelse($events as $event)
+                <article class="border rounded-lg p-3">
+                    <h4 class="font-bold text-sm">{{ $event->title }}</h4>
+                    <p class="text-xs text-gray-600 mt-1">
+                        {{ $event->event_date->format('F j, Y') }} · {{ $event->start_time }} - {{ $event->end_time }}
+                    </p>
+                </article>
+            @empty
+                <p class="text-sm text-gray-500 text-center py-6">No events have been published yet.</p>
+            @endforelse
         </div>
     </section>
 </div>

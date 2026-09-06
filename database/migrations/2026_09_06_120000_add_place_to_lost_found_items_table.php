@@ -8,9 +8,11 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::table('lost_found_items', function (Blueprint $table) {
-            $table->string('place', 255)->nullable()->after('status');
-        });
+        if (! Schema::hasColumn('lost_found_items', 'place')) {
+            Schema::table('lost_found_items', function (Blueprint $table) {
+                $table->string('place', 255)->nullable()->after('status');
+            });
+        }
     }
 
     public function down(): void

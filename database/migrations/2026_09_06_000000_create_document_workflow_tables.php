@@ -63,11 +63,12 @@ return new class extends Migration
 
         Schema::create('email_notifications', function (Blueprint $table) {
             $table->increments('email_id');
-            $table->foreignId('request_id')->constrained('document_requests', 'request_id')->cascadeOnDelete();
+            $table->unsignedInteger('request_id');
             $table->foreignId('user_id')->constrained('users')->cascadeOnDelete();
             $table->foreignId('sent_by')->nullable()->constrained('admins', 'admin_id')->nullOnDelete();
             $table->string('status', 20);
             $table->timestamp('sent_at')->nullable();
+            $table->foreign('request_id')->references('request_id')->on('document_requests')->cascadeOnDelete();
         });
     }
 
