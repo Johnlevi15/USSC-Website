@@ -37,7 +37,7 @@
         <div class="divide-y">
             @forelse($recentDocuments as $request)
                 <div class="flex items-center justify-between gap-3 p-4 text-sm">
-                    <div><p class="font-bold">{{ $request->user?->name ?? 'Unknown user' }}</p><p class="text-xs text-gray-500">{{ $request->document_type }}</p></div>
+                    <div><p class="font-bold">{{ $request->user?->name ?? 'Unknown user' }}</p><p class="text-xs text-gray-500">{{ $request->documentType?->name ?? 'Unknown type' }}</p></div>
                     <span class="rounded-full bg-yellow-100 px-2 py-1 text-[10px] font-bold uppercase text-yellow-800">{{ $request->status }}</span>
                 </div>
             @empty

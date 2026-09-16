@@ -9,30 +9,151 @@
 				@csrf
 				<label class="block text-xs font-bold text-gray-600 uppercase">
 					Type of Document
-					<select required name="document_type" class="mt-1 w-full rounded-lg border px-3 py-2 text-sm">
-						<option value="Document Fee Request Form" @selected(old('document_type', 'Document Fee Request Form') === 'Document Fee Request Form')>Document Fee Request Form</option>
+					<select required name="document_type_id" id="document_type" class="mt-1 w-full rounded-lg border px-3 py-2 text-sm">
+						<option value="">Select document type...</option>
+						@foreach($documentTypes as $type)
+							<option value="{{ $type->id }}" data-description="{{ $type->description }}" @selected(old('document_type_id') == $type->id)>{{ $type->name }}</option>
+						@endforeach
 					</select>
 				</label>
-				@foreach([
-					['label' => 'Full Name', 'name' => 'full_name', 'type' => 'text'],
-					['label' => 'Student ID Number', 'name' => 'student_id', 'type' => 'text'],
-					['label' => 'College / Department', 'name' => 'department', 'type' => 'text'],
-					['label' => 'Year & Section', 'name' => 'year_section', 'type' => 'text'],
-					['label' => 'Email Address', 'name' => 'email', 'type' => 'email'],
-				] as $field)
-					<label class="block text-xs font-bold text-gray-600 uppercase">
-						{{ $field['label'] }}
-						<input required type="{{ $field['type'] }}" name="{{ $field['name'] }}" value="{{ old($field['name']) }}" class="mt-1 w-full px-3 py-2 text-sm border rounded-lg">
-					</label>
-				@endforeach
 
-				<label class="block text-xs font-bold text-gray-600 uppercase">
-					Purpose of Request
-					<textarea required name="purpose" rows="3" class="mt-1 w-full px-3 py-2 text-sm border rounded-lg">{{ old('purpose') }}</textarea>
-				</label>
+				<div id="type-description" class="text-sm text-gray-600 mt-1 hidden"></div>
 
-				<button class="w-full py-2.5 bg-red-900 text-white font-bold rounded-lg text-sm">SUBMIT REQUEST</button>
+				{{-- Dynamic fields loaded via AJAX --}}
+				<div id="dynamic-fields" class="space-y-3"></div>
+
+				<button id="submit-btn" disabled class="w-full py-2.5 bg-red-900 text-white font-bold rounded-lg text-sm disabled:bg-gray-400">SUBMIT REQUEST</button>
 			</form>
 		</div>
 	</div>
+
+	{{-- Success Modal --}}
+	@if(session('success') && request('code'))
+	<div id="success-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+		<div class="bg-white rounded-xl shadow-lg max-w-md w-full p-6 space-y-4">
+			<div class="text-center">
+				<div class="mx-auto w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mb-3">
+					<svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+					</svg>
+				</div>
+				<h3 class="text-lg font-bold text-gray-900">Request Submitted Successfully!</h3>
+				<p class="text-sm text-gray-600 mt-2">Your document request has been received.</p>
+			</div>
+
+			<div class="bg-gray-50 rounded-lg p-4 border">
+				<p class="text-xs font-bold text-gray-600 uppercase mb-1">Tracking Number</p>
+				<p class="text-lg font-bold text-red-900 font-mono">{{ request('code') }}</p>
+				<p class="text-xs text-gray-500 mt-2">Save this number to track your request status</p>
+			</div>
+
+			<div class="flex gap-2">
+				<button onclick="copyTracking()" class="flex-1 px-4 py-2 bg-gray-100 text-gray-700 font-bold rounded-lg text-sm hover:bg-gray-200">
+					Copy Number
+				</button>
+				<a href="{{ route('track-request', ['code' => request('code')]) }}" class="flex-1 px-4 py-2 bg-red-900 text-white font-bold rounded-lg text-sm text-center hover:bg-red-800">
+					Track Now
+				</a>
+			</div>
+
+			<button onclick="closeModal()" class="w-full text-sm text-gray-500 hover:text-gray-700">
+				Close
+			</button>
+		</div>
+	</div>
+	@endif
+
+@push('scripts')
+<script>
+document.getElementById('document_type').addEventListener('change', async function() {
+    const typeId = this.value;
+    const description = this.options[this.selectedIndex]?.dataset.description;
+    const descriptionDiv = document.getElementById('type-description');
+    const fieldsContainer = document.getElementById('dynamic-fields');
+    const submitBtn = document.getElementById('submit-btn');
+
+    if (description) {
+        descriptionDiv.textContent = description;
+        descriptionDiv.classList.remove('hidden');
+    } else {
+        descriptionDiv.classList.add('hidden');
+    }
+
+    fieldsContainer.innerHTML = '';
+    submitBtn.disabled = !typeId;
+
+    if (!typeId) return;
+
+    try {
+        const response = await fetch(`/document-types/${typeId}/fields`);
+        const fields = await response.json();
+
+        fields.forEach(field => {
+            const wrapper = document.createElement('label');
+            wrapper.className = 'block text-xs font-bold text-gray-600 uppercase';
+
+            const labelSpan = document.createElement('span');
+            labelSpan.textContent = field.field_label + (field.is_required ? '' : ' (Optional)');
+            wrapper.appendChild(labelSpan);
+
+            let input;
+            if (field.field_type === 'textarea') {
+                input = document.createElement('textarea');
+                input.rows = 3;
+            } else if (field.field_type === 'select') {
+                input = document.createElement('select');
+                const emptyOption = document.createElement('option');
+                emptyOption.value = '';
+                emptyOption.textContent = 'Select...';
+                input.appendChild(emptyOption);
+                (field.field_options || []).forEach(opt => {
+                    const option = document.createElement('option');
+                    option.value = opt;
+                    option.textContent = opt;
+                    input.appendChild(option);
+                });
+            } else {
+                input = document.createElement('input');
+                input.type = field.field_type;
+            }
+
+            input.name = field.field_name;
+            input.required = field.is_required;
+            input.className = 'mt-1 w-full px-3 py-2 text-sm border rounded-lg';
+
+            wrapper.appendChild(input);
+            fieldsContainer.appendChild(wrapper);
+        });
+    } catch (err) {
+        fieldsContainer.innerHTML = '<p class="text-sm text-red-600">Failed to load form fields.</p>';
+    }
+});
+
+// Restore selection after validation error
+if (document.getElementById('document_type').value) {
+    document.getElementById('document_type').dispatchEvent(new Event('change'));
+}
+
+// Success modal functions
+function copyTracking() {
+    const trackingCode = '{{ request("code") }}';
+    navigator.clipboard.writeText(trackingCode).then(() => {
+        const btn = event.target;
+        const originalText = btn.textContent;
+        btn.textContent = 'Copied!';
+        btn.classList.add('bg-green-100', 'text-green-700');
+        btn.classList.remove('bg-gray-100', 'text-gray-700');
+        setTimeout(() => {
+            btn.textContent = originalText;
+            btn.classList.remove('bg-green-100', 'text-green-700');
+            btn.classList.add('bg-gray-100', 'text-gray-700');
+        }, 2000);
+    });
+}
+
+function closeModal() {
+    document.getElementById('success-modal').remove();
+}
+</script>
+@endpush
 @endsection

@@ -24,7 +24,7 @@ class AdminDashboardController extends Controller
                 ->whereIn('status', ['lost', 'found'])
                 ->count(),
             'monthlyEvents' => Event::whereBetween('event_date', [now()->startOfMonth(), now()->endOfMonth()])->count(),
-            'recentDocuments' => DocumentRequest::with(['user', 'fields'])->latest('request_id')->limit(5)->get(),
+            'recentDocuments' => DocumentRequest::with(['user', 'fields', 'documentType'])->latest('request_id')->limit(5)->get(),
             'recentItems' => LostFoundItem::with('poster')->latest('item_id')->limit(5)->get(),
             'upcomingEvents' => Event::whereDate('event_date', '>=', today())
                 ->orderBy('event_date')

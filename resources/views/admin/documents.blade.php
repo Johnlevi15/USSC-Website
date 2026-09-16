@@ -10,7 +10,7 @@
                 @forelse($requests as $request)
                     <tr>
                         <td class="p-4"><p class="font-bold">{{ $request->user?->name ?? 'Unknown user' }}</p><p class="text-xs text-gray-500">{{ $request->user?->email }}</p></td>
-                        <td class="p-4"><p class="font-semibold">{{ $request->document_type }}</p><p class="text-xs text-gray-500">Request #{{ $request->request_id }}</p></td>
+                        <td class="p-4"><p class="font-semibold">{{ $request->documentType?->name ?? 'Unknown type' }}</p><p class="text-xs text-gray-500">Request #{{ $request->request_id }}</p></td>
                         <td class="p-4 text-xs text-gray-500">{{ $request->submitted_at?->format('M j, Y g:i A') }}</td>
                         <td class="p-4"><span class="rounded-full bg-yellow-100 px-2 py-1 text-[10px] font-bold uppercase text-yellow-800">{{ $request->status }}</span></td>
                         <td class="p-4 text-right">
