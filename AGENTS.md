@@ -17,6 +17,13 @@ Before relying on a package's API, confirm its installed version:
 
 This project has domain-specific skills available in `**/skills/**`. You MUST activate the relevant skill whenever you work in that domain—don't wait until you're stuck.
 
+The repository skills live in `.github/skills/`. Read the relevant `SKILL.md` completely before acting, and follow the linked, task-specific rule files:
+
+- `infer-conventions`: detecting, documenting, or standardizing application conventions and `.ai/rules`.
+- `laravel-best-practices`: writing, reviewing, or refactoring Laravel PHP code.
+- `tailwindcss-development`: Tailwind or UI layout and component styling work.
+- `testing-best-practices`: designing, writing, or reviewing PHPUnit tests.
+
 ## Conventions
 
 - You must follow all existing code conventions used in this application. When creating or editing a file, check sibling files for the correct structure, approach, and naming.

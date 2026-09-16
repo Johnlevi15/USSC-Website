@@ -18,7 +18,7 @@
             </div>
         </a>
         <div class="flex items-center gap-3 text-xs">
-            <span class="hidden text-gray-300 sm:inline">{{ auth()->user()->name }}</span>
+            <span class="hidden text-gray-300 sm:inline">{{ auth('admin')->user()->name }}</span>
             <a href="{{ route('home') }}" class="rounded-lg border border-red-700 px-3 py-1.5 hover:bg-red-900">View portal</a>
             <form method="POST" action="{{ route('admin-logout') }}">@csrf<button class="rounded-lg border border-red-700 px-3 py-1.5 hover:bg-red-900">Logout</button></form>
         </div>

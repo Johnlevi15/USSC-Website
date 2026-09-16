@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\AdminActivityLog;
+use App\Models\Admin;
 use App\Models\DocumentRequest;
 use App\Models\Event;
 use App\Models\LostFoundItem;
@@ -69,7 +70,7 @@ class AdminDashboardController extends Controller
     public function logs(): View
     {
         return view('admin.logs', [
-            'logs' => AdminActivityLog::with('admin.user')->latest()->paginate(25),
+            'logs' => AdminActivityLog::with('admin')->latest()->paginate(25),
         ]);
     }
 
@@ -81,7 +82,7 @@ class AdminDashboardController extends Controller
 
         $documentRequest->update([
             'status' => $validated['status'],
-            'reviewed_by' => $request->user()->admin->admin_id,
+            'reviewed_by' => $this->adminId($request),
         ]);
 
         $this->record($request, 'document_reviewed', "Updated document request #{$documentRequest->request_id} to {$validated['status']}.", $documentRequest);
@@ -105,7 +106,7 @@ class AdminDashboardController extends Controller
         $lostFoundItem->update([
             'approval_status' => $validated['approval_status'],
             'status' => $validated['status'],
-            'reviewed_by' => $request->user()->admin->admin_id,
+            'reviewed_by' => $this->adminId($request),
         ]);
 
         $this->record($request, 'lost_found_reviewed', "Updated item #{$lostFoundItem->item_id}: approval {$validated['approval_status']}, state {$validated['status']}.", $lostFoundItem);
@@ -125,7 +126,7 @@ class AdminDashboardController extends Controller
 
         $event = Event::create([
             ...$validated,
-            'created_by' => $request->user()->admin->admin_id,
+            'created_by' => $this->adminId($request),
         ]);
 
         $this->record($request, 'event_created', "Published event: {$event->title}.", $event);
@@ -136,11 +137,20 @@ class AdminDashboardController extends Controller
     private function record(Request $request, string $action, string $description, Model $subject): void
     {
         AdminActivityLog::create([
-            'admin_id' => $request->user()->admin->admin_id,
+            'admin_id' => $this->adminId($request),
             'action' => $action,
             'description' => $description,
             'subject_type' => $subject::class,
             'subject_id' => $subject->getKey(),
         ]);
+    }
+
+    private function adminId(Request $request): int
+    {
+        $admin = $request->user('admin');
+
+        abort_unless($admin instanceof Admin, 403);
+
+        return $admin->admin_id;
     }
 }

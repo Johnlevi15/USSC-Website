@@ -26,7 +26,7 @@ class DocumentRequestController extends Controller
     {
         if (! $request->expectsJson()) {
             $validated = $request->validate([
-                'document_type' => ['required', 'string', 'max:100'],
+                'document_type' => ['required', 'in:Document Fee Request Form'],
                 'full_name' => ['required', 'string', 'max:255'],
                 'email' => ['required', 'email', 'max:255'],
                 'student_id' => ['required', 'string', 'max:255'],

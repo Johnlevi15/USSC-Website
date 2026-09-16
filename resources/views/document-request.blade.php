@@ -7,8 +7,13 @@
 
 			<form method="POST" action="{{ route('document-request.store') }}" class="space-y-3">
 				@csrf
+				<label class="block text-xs font-bold text-gray-600 uppercase">
+					Type of Document
+					<select required name="document_type" class="mt-1 w-full rounded-lg border px-3 py-2 text-sm">
+						<option value="Document Fee Request Form" @selected(old('document_type', 'Document Fee Request Form') === 'Document Fee Request Form')>Document Fee Request Form</option>
+					</select>
+				</label>
 				@foreach([
-					['label' => 'Type of Document', 'name' => 'document_type', 'type' => 'text'],
 					['label' => 'Full Name', 'name' => 'full_name', 'type' => 'text'],
 					['label' => 'Student ID Number', 'name' => 'student_id', 'type' => 'text'],
 					['label' => 'College / Department', 'name' => 'department', 'type' => 'text'],

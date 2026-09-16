@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\Event;
+use Carbon\Carbon;
+use Carbon\CarbonPeriod;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -11,12 +13,30 @@ use Illuminate\View\View;
 
 class EventController extends Controller
 {
-    public function calendar(): View
+    public function calendar(Request $request): View
     {
+        $validated = $request->validate([
+            'month' => ['nullable', 'date_format:Y-m'],
+        ]);
+
+        $month = isset($validated['month'])
+            ? Carbon::createFromFormat('Y-m', $validated['month'])->startOfMonth()
+            : now()->startOfMonth();
+        $calendarStart = $month->copy()->startOfWeek(Carbon::SUNDAY);
+        $calendarEnd = $month->copy()->endOfMonth()->endOfWeek(Carbon::SATURDAY);
+        $eventsByDate = Schema::hasTable('events')
+            ? Event::query()
+                ->whereBetween('event_date', [$month->toDateString(), $month->copy()->endOfMonth()->toDateString()])
+                ->orderBy('event_date')
+                ->orderBy('start_time')
+                ->get()
+                ->groupBy(fn (Event $event): string => $event->event_date->toDateString())
+            : collect();
+
         return view('welcome', [
-            'events' => Schema::hasTable('events')
-                ? Event::query()->orderBy('event_date')->orderBy('start_time')->get()
-                : collect(),
+            'calendarDays' => collect(CarbonPeriod::create($calendarStart, $calendarEnd)),
+            'eventsByDate' => $eventsByDate,
+            'month' => $month,
         ]);
     }
 

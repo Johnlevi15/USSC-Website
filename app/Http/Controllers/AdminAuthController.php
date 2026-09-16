@@ -24,15 +24,13 @@ class AdminAuthController extends Controller
             'password' => ['required', 'string'],
         ]);
 
-        $admin = Admin::with('user')
-            ->whereHas('user', fn ($query) => $query->where('email', $credentials['email']))
-            ->first();
+        $admin = Admin::where('email', $credentials['email'])->first();
 
         if ($admin === null || ! Hash::check($credentials['password'], $admin->password_hash)) {
             return back()->withErrors(['email' => 'The administrator credentials are invalid.'])->onlyInput('email');
         }
 
-        Auth::login($admin->user, $request->boolean('remember'));
+        Auth::guard('admin')->login($admin, $request->boolean('remember'));
         $request->session()->regenerate();
         AdminActivityLog::create([
             'admin_id' => $admin->admin_id,
@@ -45,15 +43,17 @@ class AdminAuthController extends Controller
 
     public function destroy(Request $request): RedirectResponse
     {
-        if ($request->user()?->admin !== null) {
+        $admin = $request->user('admin');
+
+        if ($admin instanceof Admin) {
             AdminActivityLog::create([
-                'admin_id' => $request->user()->admin->admin_id,
+                'admin_id' => $admin->admin_id,
                 'action' => 'admin_logout',
                 'description' => 'Signed out of the admin portal.',
             ]);
         }
 
-        Auth::logout();
+        Auth::guard('admin')->logout();
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 

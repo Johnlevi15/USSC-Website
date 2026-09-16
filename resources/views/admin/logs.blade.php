@@ -16,7 +16,7 @@
                     </div>
                     <div>
                         <p class="font-bold text-gray-800">{{ $log->description }}</p>
-                        <p class="mt-1 text-xs text-gray-500">{{ $log->admin?->user?->name ?? 'Unknown admin' }} · {{ str_replace('_', ' ', $log->action) }}</p>
+                        <p class="mt-1 text-xs text-gray-500">{{ $log->admin?->name ?? 'Unknown admin' }} · {{ str_replace('_', ' ', $log->action) }}</p>
                     </div>
                 </div>
                 <time class="text-xs text-gray-400" datetime="{{ $log->created_at?->toIso8601String() }}">{{ $log->created_at?->format('M j, Y g:i A') }}</time>

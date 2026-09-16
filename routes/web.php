@@ -17,7 +17,7 @@ Route::post('/document-request', [DocumentRequestController::class, 'store'])->n
 Route::view('/track-request', 'track-request')->name('track-request');
 Route::get('/admin-login', [AdminAuthController::class, 'create'])->name('admin-login');
 Route::post('/admin-login', [AdminAuthController::class, 'store'])->name('admin-login.store');
-Route::post('/admin-logout', [AdminAuthController::class, 'destroy'])->middleware('auth')->name('admin-logout');
+Route::post('/admin-logout', [AdminAuthController::class, 'destroy'])->middleware('auth:admin')->name('admin-logout');
 
 Route::resource('document-requests', DocumentRequestController::class)
     ->parameters(['document-requests' => 'documentRequest'])
@@ -27,7 +27,7 @@ Route::resource('lost-found-items', LostFoundItemController::class)
     ->only(['index', 'store', 'show']);
 Route::resource('events', EventController::class)->only(['index', 'show']);
 
-Route::middleware(['auth', 'admin'])->group(function (): void {
+Route::middleware(['auth:admin', 'admin'])->group(function (): void {
     Route::get('/admin', [AdminDashboardController::class, 'dashboard'])->name('admin.dashboard');
     Route::get('/admin/document-requests', [AdminDashboardController::class, 'documents'])->name('admin.documents');
     Route::patch('/admin/document-requests/{documentRequest}', [AdminDashboardController::class, 'updateDocument'])->name('admin.documents.update');
