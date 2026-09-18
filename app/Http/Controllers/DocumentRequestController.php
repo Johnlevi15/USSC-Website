@@ -33,6 +33,35 @@ class DocumentRequestController extends Controller
         return response()->json($fields);
     }
 
+
+    public function track(Request $request): View
+    {
+        $code = strtoupper(trim((string) $request->query('code', '')));
+        $trackedRequest = null;
+        $trackingError = null;
+
+        if ($code !== '') {
+            if (! preg_match('/^USSC-(\d{4})-(\d+)$/', $code, $matches)) {
+                $trackingError = 'Please enter a valid tracking number, for example USSC-2026-0001.';
+            } else {
+                $year = (int) $matches[1];
+                $requestId = (int) $matches[2];
+
+                $trackedRequest = DocumentRequest::query()
+                    ->with('documentType:id,name')
+                    ->where('request_id', $requestId)
+                    ->first();
+
+                if ($trackedRequest === null || (int) $trackedRequest->submitted_at?->year !== $year) {
+                    $trackedRequest = null;
+                    $trackingError = 'No document request was found for that tracking number.';
+                }
+            }
+        }
+
+        return view('track-request', compact('code', 'trackedRequest', 'trackingError'));
+    }
+
     public function index(): JsonResponse
     {
         return response()->json(DocumentRequest::with(['fields', 'user', 'reviewer', 'documentType'])->get());

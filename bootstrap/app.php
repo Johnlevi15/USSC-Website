@@ -16,6 +16,10 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'admin' => EnsureUserIsAdmin::class,
         ]);
+
+        // Any unauthenticated request to a protected admin route is sent to
+        // the dedicated administrator sign-in page instead of a student login.
+        $middleware->redirectGuestsTo(fn (Request $request) => route('admin-login'));
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(
