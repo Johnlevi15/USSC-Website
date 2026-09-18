@@ -68,7 +68,14 @@
                         <p class="mt-1">{{ $statusInfo[2] }}</p>
                     </div>
 
-                    <p class="mt-4 text-center text-[11px] text-gray-500">For privacy, only request status and general document information are shown here.</p>
+                    @if(filled($trackedRequest->admin_remarks))
+                        <div class="mt-4 rounded-lg border border-gray-200 bg-white p-4 text-xs text-gray-800">
+                            <p class="font-bold uppercase tracking-wide text-gray-500">Admin Remarks</p>
+                            <p class="mt-2 whitespace-pre-line break-words leading-5">{{ $trackedRequest->admin_remarks }}</p>
+                        </div>
+                    @endif
+
+                    <p class="mt-4 text-center text-[11px] text-gray-500">For privacy, only request status, admin remarks, and general document information are shown here.</p>
                 </div>
             @endif
         </div>

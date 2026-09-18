@@ -36,10 +36,16 @@
         </div>
         <div class="divide-y">
             @forelse($recentDocuments as $request)
-                <div class="flex items-center justify-between gap-3 p-4 text-sm">
+                <a href="{{ route('admin.documents.review', $request) }}" class="flex items-center justify-between gap-3 p-4 text-sm hover:bg-gray-50">
                     <div><p class="font-bold">{{ $request->user?->name ?? 'Unknown user' }}</p><p class="text-xs text-gray-500">{{ $request->documentType?->name ?? 'Unknown type' }}</p></div>
-                    <span class="rounded-full bg-yellow-100 px-2 py-1 text-[10px] font-bold uppercase text-yellow-800">{{ $request->status }}</span>
-                </div>
+                    <span @class([
+                        'rounded-full px-2 py-1 text-[10px] font-bold uppercase',
+                        'bg-green-100 text-green-800' => $request->status === 'ready',
+                        'bg-red-100 text-red-800' => $request->status === 'rejected',
+                        'bg-blue-100 text-blue-800' => in_array($request->status, ['review', 'approved']),
+                        'bg-yellow-100 text-yellow-800' => $request->status === 'pending',
+                    ])>{{ $request->status === 'review' ? 'Under Review' : $request->status }}</span>
+                </a>
             @empty
                 <p class="p-6 text-center text-sm text-gray-500">No document requests yet.</p>
             @endforelse

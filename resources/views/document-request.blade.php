@@ -1,6 +1,124 @@
 @extends('layouts.ussc')
 @section('title', 'Request Document | CLSU USSC Portal')
 @section('content')
+{{-- Data Privacy Notice Modal --}}
+<div
+    id="privacy-modal"
+    class="fixed inset-0 z-[100] hidden items-center justify-center bg-black/60 p-4"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="privacy-title"
+>
+    <div class="w-full max-w-2xl overflow-hidden rounded-2xl bg-white shadow-2xl">
+
+        {{-- Header --}}
+        <div class="bg-red-900 px-6 py-4 text-white">
+            <div class="flex items-center gap-3">
+                <div class="flex h-10 w-10 items-center justify-center rounded-full bg-yellow-400 text-red-900">
+                    <i class="fa-solid fa-shield-halved"></i>
+                </div>
+
+                <div>
+                    <h2 id="privacy-title" class="text-lg font-bold">
+                        Data Privacy Notice
+                    </h2>
+
+                    <p class="text-xs text-red-100">
+                        Document Request Service
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        {{-- Content --}}
+        <div class="max-h-[70vh] overflow-y-auto p-6">
+
+            <p class="mb-4 text-sm leading-6 text-gray-700">
+                The Central Luzon State University – University Supreme
+                Student Council (CLSU-USSC) respects and protects the privacy
+                of students who use this document request service.
+            </p>
+
+            <p class="mb-4 text-sm leading-6 text-gray-700">
+                To process your request, the system may collect personal
+                information such as your name, email address, student ID
+                number, college or department, year and section, purpose of
+                request, and other information required for the document you
+                are requesting.
+            </p>
+
+            <p class="mb-4 text-sm leading-6 text-gray-700">
+                The information you provide will be used only for receiving,
+                verifying, processing, tracking, and completing your document
+                request. Access to this information should be limited to
+                authorized personnel responsible for handling the request.
+            </p>
+
+            <p class="mb-5 text-sm leading-6 text-gray-700">
+                By continuing, you acknowledge that the information you
+                provide may be collected and processed in accordance with
+                Republic Act No. 10173, also known as the
+                <strong>Data Privacy Act of 2012</strong>, and applicable
+                university policies.
+            </p>
+
+            <div class="space-y-4 border-t pt-5">
+
+                <label class="flex cursor-pointer items-start gap-3">
+                    <input
+                        id="privacy-agree"
+                        type="checkbox"
+                        class="mt-1 h-4 w-4 accent-red-900"
+                    >
+
+                    <span class="text-sm text-gray-700">
+                        <strong>I Agree and Understand.</strong>
+                        I have read and understood the Data Privacy Notice
+                        and agree to the collection and processing of the
+                        information necessary for my document request.
+                    </span>
+                </label>
+
+                <label class="flex cursor-pointer items-start gap-3">
+                    <input
+                        id="privacy-confirm"
+                        type="checkbox"
+                        class="mt-1 h-4 w-4 accent-red-900"
+                    >
+
+                    <span class="text-sm text-gray-700">
+                        <strong>I Confirm.</strong>
+                        I am submitting this request using my own information,
+                        and the details I provide are true and accurate to the
+                        best of my knowledge.
+                    </span>
+                </label>
+
+            </div>
+        </div>
+
+        {{-- Buttons --}}
+        <div class="flex flex-col-reverse gap-2 border-t bg-gray-50 px-6 py-4 sm:flex-row sm:justify-end">
+
+            <a
+                href="{{ route('home') }}"
+                class="rounded-lg border border-gray-300 px-5 py-2.5 text-center text-sm font-bold text-gray-600 transition hover:bg-gray-100"
+            >
+                Cancel
+            </a>
+
+            <button
+                id="privacy-continue"
+                type="button"
+                disabled
+                class="rounded-lg bg-red-900 px-6 py-2.5 text-sm font-bold text-white transition hover:bg-red-800 disabled:cursor-not-allowed disabled:bg-gray-400"
+            >
+                I Agree & Continue
+            </button>
+
+        </div>
+    </div>
+</div>
 	<div class="max-w-lg w-full mx-auto p-4 md:p-6">
 		<div class="bg-white rounded-xl shadow-sm border p-6">
 			<h2 class="text-lg font-bold mb-4 pb-2 border-b">Document Request Form</h2>
@@ -97,6 +215,52 @@
 
 @push('scripts')
 <script>
+    // ---------------------------------------------------------
+// DATA PRIVACY NOTICE
+// ---------------------------------------------------------
+
+const privacyStorageKey = 'ussc_document_privacy_accepted_v1';
+
+const privacyModal = document.getElementById('privacy-modal');
+const privacyAgree = document.getElementById('privacy-agree');
+const privacyConfirm = document.getElementById('privacy-confirm');
+const privacyContinue = document.getElementById('privacy-continue');
+
+function updatePrivacyButton() {
+    privacyContinue.disabled = !(
+        privacyAgree.checked &&
+        privacyConfirm.checked
+    );
+}
+
+privacyAgree.addEventListener('change', updatePrivacyButton);
+privacyConfirm.addEventListener('change', updatePrivacyButton);
+
+privacyContinue.addEventListener('click', function () {
+
+    if (!privacyAgree.checked || !privacyConfirm.checked) {
+        return;
+    }
+
+    localStorage.setItem(
+        privacyStorageKey,
+        'accepted'
+    );
+
+    privacyModal.classList.add('hidden');
+    privacyModal.classList.remove('flex');
+});
+
+document.addEventListener('DOMContentLoaded', function () {
+
+    const hasAcceptedPrivacy =
+        localStorage.getItem(privacyStorageKey) === 'accepted';
+
+    if (!hasAcceptedPrivacy) {
+        privacyModal.classList.remove('hidden');
+        privacyModal.classList.add('flex');
+    }
+});
 document.getElementById('document_type').addEventListener('change', async function() {
     const typeId = this.value;
     const description = this.options[this.selectedIndex]?.dataset.description;

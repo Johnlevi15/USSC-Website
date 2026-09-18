@@ -11,7 +11,7 @@ class DocumentRequest extends Model
     protected $table = 'document_requests';
     protected $primaryKey = 'request_id';
     public $timestamps = false;
-    protected $fillable = ['user_id', 'document_type_id', 'status', 'reviewed_by', 'submitted_at'];
+    protected $fillable = ['user_id', 'document_type_id', 'status', 'reviewed_by', 'admin_remarks', 'submitted_at'];
 
     protected function casts(): array
     {

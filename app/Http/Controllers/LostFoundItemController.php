@@ -76,7 +76,7 @@ class LostFoundItemController extends Controller
             'category' => ['required', 'string', 'max:100'],
             'description' => ['required', 'string'],
             'image' => ['sometimes', 'nullable', 'image', 'mimes:jpeg,jpg,png,webp', 'max:5120'],
-            'status' => ['sometimes', 'string', 'max:20'],
+            'status' => ['sometimes', 'in:lost,found,claimed'],
             'place' => ['required', 'string', 'max:255'],
         ]);
 
@@ -103,12 +103,23 @@ class LostFoundItemController extends Controller
             'category' => ['sometimes', 'string', 'max:100'],
             'description' => ['sometimes', 'string'],
             'image' => ['sometimes', 'nullable', 'image', 'mimes:jpeg,jpg,png,webp', 'max:5120'],
-            'status' => ['sometimes', 'string', 'max:20'],
+            'status' => ['sometimes', 'in:lost,found,claimed'],
             'place' => ['sometimes', 'string', 'max:255'],
             'reviewed_by' => ['sometimes', 'nullable', 'integer', 'exists:admins,admin_id'],
         ]);
 
         unset($validated['image']);
+
+        if (isset($validated['status'])
+            && $validated['status'] === 'claimed'
+            && ! in_array($lostFoundItem->status, ['found', 'claimed'], true)) {
+            return response()->json([
+                'message' => 'Only found items can be marked as claimed.',
+                'errors' => [
+                    'status' => ['Only found items can be marked as claimed.'],
+                ],
+            ], 422);
+        }
 
         if ($request->hasFile('image')) {
             if ($lostFoundItem->image_path) {
@@ -117,6 +128,9 @@ class LostFoundItemController extends Controller
 
             $validated['image_path'] = $request->file('image')->store('lost-found', 'public');
         }
+
+        // Persist the validated changes before returning the refreshed model.
+        $lostFoundItem->update($validated);
 
         return response()->json($lostFoundItem->fresh(['poster', 'reviewer']));
     }
