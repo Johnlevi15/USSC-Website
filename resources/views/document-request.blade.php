@@ -4,7 +4,19 @@
 	<div class="max-w-lg w-full mx-auto p-4 md:p-6">
 		<div class="bg-white rounded-xl shadow-sm border p-6">
 			<h2 class="text-lg font-bold mb-4 pb-2 border-b">Document Request Form</h2>
+@if ($errors->any())
+    <div class="mb-4 rounded-lg border border-red-200 bg-red-50 p-3">
+        <p class="text-sm font-bold text-red-700 mb-1">
+            Please check the following:
+        </p>
 
+        <ul class="list-disc pl-5 text-sm text-red-600">
+            @foreach ($errors->all() as $error)
+                <li>{{ $error }}</li>
+            @endforeach
+        </ul>
+    </div>
+@endif
 			<form method="POST" action="{{ route('document-request.store') }}" class="space-y-3">
 				@csrf
 				<label class="block text-xs font-bold text-gray-600 uppercase">
@@ -18,7 +30,27 @@
 				</label>
 
 				<div id="type-description" class="text-sm text-gray-600 mt-1 hidden"></div>
+<label class="block text-xs font-bold text-gray-600 uppercase">
+    Full Name
+    <input
+        type="text"
+        name="full_name"
+        value="{{ old('full_name') }}"
+        required
+        class="mt-1 w-full rounded-lg border px-3 py-2 text-sm"
+    >
+</label>
 
+<label class="block text-xs font-bold text-gray-600 uppercase">
+    Email Address
+    <input
+        type="email"
+        name="email"
+        value="{{ old('email') }}"
+        required
+        class="mt-1 w-full rounded-lg border px-3 py-2 text-sm"
+    >
+</label>
 				{{-- Dynamic fields loaded via AJAX --}}
 				<div id="dynamic-fields" class="space-y-3"></div>
 
@@ -89,6 +121,9 @@ document.getElementById('document_type').addEventListener('change', async functi
         const fields = await response.json();
 
         fields.forEach(field => {
+        if (['full_name', 'email'].includes(field.field_name)) {
+    return;
+}
             const wrapper = document.createElement('label');
             wrapper.className = 'block text-xs font-bold text-gray-600 uppercase';
 

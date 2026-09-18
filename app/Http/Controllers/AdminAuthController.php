@@ -12,8 +12,12 @@ use Illuminate\View\View;
 
 class AdminAuthController extends Controller
 {
-    public function create(): View
+    public function create(Request $request): View|RedirectResponse
     {
+        if ($request->user('admin') instanceof Admin) {
+            return redirect()->route('admin.dashboard');
+        }
+
         return view('admin-login');
     }
 
