@@ -40,7 +40,6 @@
                             'min-h-32 border-b border-r border-gray-200 p-2 transition',
                             'bg-gray-50 text-gray-400' => ! $day->isSameMonth($month),
                             'bg-red-50/50' => $day->isToday(),
-                            'bg-red-50/40 ring-2 ring-inset ring-red-200' => $dayEvents->isNotEmpty() && ! $day->isToday(),
                         ])>
                             <div class="mb-2 flex items-center justify-between">
                                 <span @class([
@@ -71,7 +70,7 @@
         <div class="mt-6 border-t pt-5">
             <div class="mb-3 flex items-center justify-between gap-3">
                 <h4 class="text-sm font-extrabold uppercase tracking-wide text-red-900">Events This Month</h4>
-                <span class="rounded-full bg-red-50 px-3 py-1 text-xs font-bold text-red-900">{{ $events->count() }} scheduled</span>
+                <span class="rounded-full bg-gray-100 px-3 py-1 text-xs font-bold text-gray-700">{{ $events->count() }} scheduled</span>
             </div>
 
             @if($events->isNotEmpty())
