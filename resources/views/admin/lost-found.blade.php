@@ -64,11 +64,10 @@
                         <p class="text-xs text-gray-500">{{ $item->category }} · {{ $item->place }} · Submitted {{ $item->submitted_at?->format('M j, Y g:i A') ?? 'Unknown date' }}</p>
                     </div>
 
-                    <button type="button" onclick="toggleItemEditor('item-editor-{{ $item->item_id }}')" class="rounded-lg border border-red-900 px-4 py-2 text-xs font-bold text-red-900 hover:bg-red-50">Edit</button>
-                </div>
-
-                <div id="item-editor-{{ $item->item_id }}" class="mt-4 hidden">
-                    @include('admin.partials.lost-found-item-form', ['item' => $item])
+                    <a href="{{ route('admin.lost-found.review', $item) }}" class="inline-flex items-center gap-2 rounded-lg bg-red-900 px-4 py-2 text-xs font-bold text-white hover:bg-red-800">
+                        <i class="fa-solid fa-eye"></i>
+                        Review
+                    </a>
                 </div>
             </article>
         @empty
@@ -77,11 +76,3 @@
     </div>
 </section>
 @endsection
-
-@push('scripts')
-<script>
-    function toggleItemEditor(id) {
-        document.getElementById(id).classList.toggle('hidden');
-    }
-</script>
-@endpush

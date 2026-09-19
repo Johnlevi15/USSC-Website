@@ -31,5 +31,10 @@
     <p class="mt-3 text-xs text-gray-500">Reported by {{ $item->poster?->name ?? 'Unknown user' }} · {{ $item->poster?->email }}</p>
     <p class="mt-1 text-xs text-gray-400">Submitted {{ $item->submitted_at?->format('M j, Y g:i A') ?? 'Unknown date' }}</p>
 
-    @include('admin.partials.lost-found-item-form', ['item' => $item])
+    <div class="mt-4 border-t pt-3 text-right">
+        <a href="{{ route('admin.lost-found.review', $item) }}" class="inline-flex items-center gap-2 rounded-lg bg-red-900 px-4 py-2 text-xs font-bold text-white hover:bg-red-800">
+            <i class="fa-solid fa-eye"></i>
+            Review
+        </a>
+    </div>
 </article>

@@ -24,17 +24,18 @@ class EventController extends Controller
             : now()->startOfMonth();
         $calendarStart = $month->copy()->startOfWeek(Carbon::SUNDAY);
         $calendarEnd = $month->copy()->endOfMonth()->endOfWeek(Carbon::SATURDAY);
-        $eventsByDate = Schema::hasTable('events')
+        $events = Schema::hasTable('events')
             ? Event::query()
                 ->whereBetween('event_date', [$month->toDateString(), $month->copy()->endOfMonth()->toDateString()])
                 ->orderBy('event_date')
                 ->orderBy('start_time')
                 ->get()
-                ->groupBy(fn (Event $event): string => $event->event_date->toDateString())
             : collect();
+        $eventsByDate = $events->groupBy(fn (Event $event): string => $event->event_date->toDateString());
 
         return view('welcome', [
             'calendarDays' => collect(CarbonPeriod::create($calendarStart, $calendarEnd)),
+            'events' => $events,
             'eventsByDate' => $eventsByDate,
             'month' => $month,
         ]);

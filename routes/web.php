@@ -71,6 +71,7 @@ Route::middleware(['auth:admin', 'admin'])->group(function (): void {
     Route::patch('/admin/document-requests/{documentRequest}', [AdminDashboardController::class, 'updateDocument'])->name('admin.documents.update');
 
     Route::get('/admin/lost-found', [AdminDashboardController::class, 'lostFound'])->name('admin.lost-found');
+    Route::get('/admin/lost-found/{lostFoundItem}', [AdminDashboardController::class, 'reviewLostFound'])->name('admin.lost-found.review');
     Route::patch('/admin/lost-found/{lostFoundItem}', [AdminDashboardController::class, 'updateLostFound'])->name('admin.lost-found.update');
 
     Route::get('/admin/events', [AdminDashboardController::class, 'events'])->name('admin.events');

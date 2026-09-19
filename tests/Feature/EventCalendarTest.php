@@ -36,6 +36,8 @@ class EventCalendarTest extends TestCase
 
         $this->get('/?month=2026-10')
             ->assertSee('October 2026')
+            ->assertSee('Events This Month')
+            ->assertSee('1 scheduled')
             ->assertSee('October campus fair')
             ->assertDontSee('November assembly');
     }

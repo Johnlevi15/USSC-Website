@@ -37,9 +37,10 @@
                     @foreach($calendarDays as $day)
                         @php($dayEvents = $eventsByDate->get($day->toDateString(), collect()))
                         <div @class([
-                            'min-h-32 border-b border-r border-gray-200 p-2',
+                            'min-h-32 border-b border-r border-gray-200 p-2 transition',
                             'bg-gray-50 text-gray-400' => ! $day->isSameMonth($month),
                             'bg-red-50/50' => $day->isToday(),
+                            'bg-red-50/40 ring-2 ring-inset ring-red-200' => $dayEvents->isNotEmpty() && ! $day->isToday(),
                         ])>
                             <div class="mb-2 flex items-center justify-between">
                                 <span @class([
@@ -47,23 +48,59 @@
                                     'bg-red-900 text-white' => $day->isToday(),
                                 ])>{{ $day->day }}</span>
                                 @if($dayEvents->isNotEmpty())
-                                    <span class="rounded-full bg-yellow-100 px-1.5 py-0.5 text-[10px] font-bold text-yellow-800">{{ $dayEvents->count() }}</span>
+                                    <span class="rounded-full bg-red-900 px-2 py-0.5 text-[10px] font-bold text-white">{{ $dayEvents->count() }} event{{ $dayEvents->count() > 1 ? 's' : '' }}</span>
                                 @endif
                             </div>
                             <div class="space-y-1">
                                 @foreach($dayEvents->take(2) as $event)
-                                    <article class="rounded bg-red-100 px-1.5 py-1 text-[10px] leading-tight text-red-950" title="{{ $event->title }} — {{ $event->start_time }} to {{ $event->end_time }}">
-                                        <span class="font-bold">{{ $event->start_time }}</span> {{ $event->title }}
+                                    <article class="rounded-md border-l-4 border-red-900 bg-white px-2 py-1 text-[10px] leading-tight text-red-950 shadow-sm" title="{{ $event->title }} - {{ $event->start_time }} to {{ $event->end_time }}">
+                                        <span class="block font-extrabold text-red-900">{{ \Illuminate\Support\Carbon::parse($event->start_time)->format('g:i A') }}</span>
+                                        <span class="font-semibold">{{ $event->title }}</span>
                                     </article>
                                 @endforeach
                                 @if($dayEvents->count() > 2)
-                                    <p class="px-1 text-[10px] font-semibold text-red-800">+{{ $dayEvents->count() - 2 }} more</p>
+                                    <p class="rounded bg-red-900 px-2 py-1 text-[10px] font-bold text-white">+{{ $dayEvents->count() - 2 }} more</p>
                                 @endif
                             </div>
                         </div>
                     @endforeach
                 </div>
             </div>
+        </div>
+
+        <div class="mt-6 border-t pt-5">
+            <div class="mb-3 flex items-center justify-between gap-3">
+                <h4 class="text-sm font-extrabold uppercase tracking-wide text-red-900">Events This Month</h4>
+                <span class="rounded-full bg-red-50 px-3 py-1 text-xs font-bold text-red-900">{{ $events->count() }} scheduled</span>
+            </div>
+
+            @if($events->isNotEmpty())
+                <div class="grid grid-cols-1 gap-3 md:grid-cols-2">
+                    @foreach($events as $event)
+                        <article class="rounded-lg border border-red-100 bg-red-50/40 p-4 shadow-sm">
+                            <div class="flex items-start gap-3">
+                                <div class="flex h-12 w-12 shrink-0 flex-col items-center justify-center rounded-lg bg-red-900 text-white">
+                                    <span class="text-[10px] font-bold uppercase">{{ $event->event_date->format('M') }}</span>
+                                    <span class="text-lg font-extrabold leading-none">{{ $event->event_date->format('j') }}</span>
+                                </div>
+                                <div class="min-w-0">
+                                    <h5 class="font-bold text-gray-900">{{ $event->title }}</h5>
+                                    <p class="mt-1 text-xs font-semibold text-red-900">
+                                        {{ \Illuminate\Support\Carbon::parse($event->start_time)->format('g:i A') }}
+                                        -
+                                        {{ \Illuminate\Support\Carbon::parse($event->end_time)->format('g:i A') }}
+                                    </p>
+                                    @if($event->description)
+                                        <p class="mt-2 line-clamp-2 text-xs leading-5 text-gray-600">{{ $event->description }}</p>
+                                    @endif
+                                </div>
+                            </div>
+                        </article>
+                    @endforeach
+                </div>
+            @else
+                <p class="rounded-lg border border-dashed border-gray-200 bg-gray-50 p-6 text-center text-sm text-gray-500">No events are scheduled for this month.</p>
+            @endif
         </div>
     </section>
 </div>

@@ -75,6 +75,15 @@ class AdminDashboardController extends Controller
         ]);
     }
 
+    public function reviewLostFound(LostFoundItem $lostFoundItem): View
+    {
+        $lostFoundItem->load(['poster', 'reviewer']);
+
+        return view('admin.lost-found-review', [
+            'item' => $lostFoundItem,
+        ]);
+    }
+
     public function events(): View
     {
         return view('admin.events', [
@@ -206,7 +215,7 @@ class AdminDashboardController extends Controller
 
         $this->record($request, 'lost_found_reviewed', "Updated item #{$lostFoundItem->item_id}: approval {$validated['approval_status']}, state {$validated['status']}.", $lostFoundItem);
 
-        return redirect()->route('admin.lost-found')->with('success', 'Lost-and-found item status updated.');
+        return redirect()->route('admin.lost-found.review', $lostFoundItem)->with('success', 'Lost-and-found item status updated.');
     }
 
     public function storeEvent(Request $request): RedirectResponse
