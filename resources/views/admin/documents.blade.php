@@ -14,11 +14,13 @@
                         <td class="p-4 text-xs text-gray-500">{{ $request->submitted_at?->format('M j, Y g:i A') }}</td>
                         <td class="p-4"><span class="rounded-full bg-yellow-100 px-2 py-1 text-[10px] font-bold uppercase text-yellow-800">{{ $request->status }}</span></td>
                         <td class="p-4 text-right">
+                            <div class="flex justify-end gap-2">
                             <form method="POST" action="{{ route('admin.documents.update', $request) }}" class="flex justify-end gap-2">
                                 @csrf @method('PATCH')
                                 <select name="status" class="rounded-lg border px-2 py-1 text-xs"><option value="pending" @selected($request->status === 'pending')>Pending</option><option value="review" @selected($request->status === 'review')>Under Review</option><option value="approved" @selected($request->status === 'approved')>Approved</option><option value="ready" @selected($request->status === 'ready')>Ready</option><option value="rejected" @selected($request->status === 'rejected')>Rejected</option></select>
                                 <button class="rounded-lg bg-red-900 px-3 py-1 text-xs font-bold text-white hover:bg-red-800">Save</button>
                             </form>
+                            </div>
                         </td>
                     </tr>
                 @empty

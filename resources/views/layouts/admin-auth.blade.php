@@ -13,8 +13,8 @@
         <div class="w-full max-w-md">
             <div class="mb-5 text-center">
                 <div class="mx-auto mb-3 flex items-center justify-center gap-3">
-                    <img src="{{ asset('clsu-logo.png') }}" alt="CLSU Seal" class="h-14 w-14 object-contain">
-                    <img src="{{ asset('logo1.png') }}" alt="USSC Logo" class="h-14 w-14 object-contain">
+                    <img src="{{ asset('Logo_Green.png') }}" alt="CLSU Seal" class="h-14 w-14 object-contain">
+                    <img src="{{ asset('logo.png') }}" alt="USSC Logo" class="h-14 w-14 object-contain">
                 </div>
                 <h1 class="text-lg font-extrabold text-red-950">USSC ADMIN PORTAL</h1>
                 <p class="text-xs text-gray-500">Central Luzon State University</p>

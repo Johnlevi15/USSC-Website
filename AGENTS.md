@@ -17,13 +17,6 @@ Before relying on a package's API, confirm its installed version:
 
 This project has domain-specific skills available in `**/skills/**`. You MUST activate the relevant skill whenever you work in that domain—don't wait until you're stuck.
 
-The repository skills live in `.github/skills/`. Read the relevant `SKILL.md` completely before acting, and follow the linked, task-specific rule files:
-
-- `infer-conventions`: detecting, documenting, or standardizing application conventions and `.ai/rules`.
-- `laravel-best-practices`: writing, reviewing, or refactoring Laravel PHP code.
-- `tailwindcss-development`: Tailwind or UI layout and component styling work.
-- `testing-best-practices`: designing, writing, or reviewing PHPUnit tests.
-
 ## Conventions
 
 - You must follow all existing code conventions used in this application. When creating or editing a file, check sibling files for the correct structure, approach, and naming.
@@ -110,6 +103,15 @@ The repository skills live in `.github/skills/`. Read the relevant `SKILL.md` co
 # Deployment
 
 - Laravel can be deployed using [Laravel Cloud](https://cloud.laravel.com/), which is the fastest way to deploy and scale production Laravel applications.
+
+=== tests rules ===
+
+# Test Enforcement
+
+- Test every code change by adding or updating a test.
+- Run the affected tests and ensure they pass.
+- Test the changed behavior and its important failure modes, but do not add tests beyond them.
+- Read the `testing-best-practices` skill before writing tests.
 
 === laravel/core rules ===
 

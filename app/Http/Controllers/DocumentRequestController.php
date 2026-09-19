@@ -9,6 +9,9 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 
 class DocumentRequestController extends Controller
@@ -32,7 +35,6 @@ class DocumentRequestController extends Controller
 
         return response()->json($fields);
     }
-
 
     public function track(Request $request): View
     {
@@ -70,6 +72,10 @@ class DocumentRequestController extends Controller
     public function store(Request $request): JsonResponse|RedirectResponse
     {
         if (! $request->expectsJson()) {
+            $request->validate([
+                'document_type_id' => ['required', 'exists:document_types,id'],
+            ]);
+
             $documentType = DocumentType::findOrFail($request->document_type_id);
 
             // Build validation rules from document type fields
@@ -80,6 +86,42 @@ class DocumentRequestController extends Controller
             ];
 
             foreach ($documentType->fields as $field) {
+                if ($this->hasOtherOption($field->field_options)) {
+                    $rules[$field->field_name.'_other'] = ['nullable', 'string', 'max:150'];
+                }
+
+                if ($field->field_type === 'file') {
+                    $rules[$field->field_name] = [
+                        $field->is_required ? 'required' : 'nullable',
+                        'file',
+                        'mimes:pdf,doc,docx,jpg,jpeg,png',
+                        'max:5120',
+                    ];
+
+                    continue;
+                }
+
+                if ($field->field_type === 'image') {
+                    $rules[$field->field_name] = [
+                        $field->is_required ? 'required' : 'nullable',
+                        'image',
+                        'mimes:jpg,jpeg,png,webp',
+                        'max:5120',
+                    ];
+
+                    continue;
+                }
+
+                if ($field->field_type === 'checkbox') {
+                    $options = $field->field_options ?? [];
+                    $rules[$field->field_name] = $field->is_required
+                        ? ['required', 'array', 'min:1']
+                        : ['sometimes', 'array'];
+                    $rules[$field->field_name.'.*'] = ['string', 'max:150', Rule::in($options)];
+
+                    continue;
+                }
+
                 $fieldRules = [];
                 if ($field->is_required) {
                     $fieldRules[] = 'required';
@@ -92,8 +134,9 @@ class DocumentRequestController extends Controller
             }
 
             $validated = $request->validate($rules);
+            $this->validateOtherOptions($validated, $documentType);
 
-            $documentRequest = $this->createFromForm($validated, $documentType);
+            $documentRequest = $this->createFromForm($validated, $documentType, $request);
 
             return redirect()->route('track-request', [
                 'code' => 'USSC-'.now()->year.'-'.str_pad((string) $documentRequest->request_id, 4, '0', STR_PAD_LEFT),
@@ -126,9 +169,9 @@ class DocumentRequestController extends Controller
         return response()->json($documentRequest, 201);
     }
 
-    private function createFromForm(array $validated, DocumentType $documentType): DocumentRequest
+    private function createFromForm(array $validated, DocumentType $documentType, Request $request): DocumentRequest
     {
-        return DB::transaction(function () use ($validated, $documentType): DocumentRequest {
+        return DB::transaction(function () use ($validated, $documentType, $request): DocumentRequest {
             $user = User::updateOrCreate(
                 ['email' => $validated['email']],
                 [
@@ -145,10 +188,34 @@ class DocumentRequestController extends Controller
             // Store all dynamic fields
             $fieldsToCreate = [];
             foreach ($documentType->fields as $field) {
+                if (in_array($field->field_type, ['file', 'image'], true)) {
+                    if ($request->hasFile($field->field_name)) {
+                        $file = $request->file($field->field_name);
+                        $fileName = Str::uuid().'.'.$file->getClientOriginalExtension();
+                        $path = $file->storeAs("document-uploads/{$documentRequest->request_id}", $fileName);
+
+                        $fieldsToCreate[] = [
+                            'field_name' => $field->field_name,
+                            'field_value' => $path,
+                        ];
+                    }
+
+                    continue;
+                }
+
+                if ($field->field_type === 'checkbox') {
+                    $fieldsToCreate[] = [
+                        'field_name' => $field->field_name,
+                        'field_value' => json_encode($this->checkboxValues($validated, $field->field_name)),
+                    ];
+
+                    continue;
+                }
+
                 if (isset($validated[$field->field_name])) {
                     $fieldsToCreate[] = [
                         'field_name' => $field->field_name,
-                        'field_value' => $validated[$field->field_name],
+                        'field_value' => $this->scalarValue($validated, $field->field_name),
                     ];
                 }
             }
@@ -184,5 +251,73 @@ class DocumentRequestController extends Controller
         $documentRequest->delete();
 
         return response()->json(null, 204);
+    }
+
+    /**
+     * @param  array<string, mixed>  $validated
+     */
+    private function validateOtherOptions(array $validated, DocumentType $documentType): void
+    {
+        $errors = [];
+
+        foreach ($documentType->fields as $field) {
+            if (! $this->hasOtherOption($field->field_options)) {
+                continue;
+            }
+
+            $otherKey = $field->field_name.'_other';
+            $otherValue = trim((string) ($validated[$otherKey] ?? ''));
+
+            if ($field->field_type === 'checkbox' && in_array('Other', $validated[$field->field_name] ?? [], true) && $otherValue === '') {
+                $errors[$otherKey] = 'Please specify the other option.';
+            }
+
+            if ($field->field_type === 'select' && ($validated[$field->field_name] ?? null) === 'Other' && $otherValue === '') {
+                $errors[$otherKey] = 'Please specify the other option.';
+            }
+        }
+
+        if ($errors !== []) {
+            throw ValidationException::withMessages($errors);
+        }
+    }
+
+    /**
+     * @param  array<string, mixed>  $validated
+     * @return list<string>
+     */
+    private function checkboxValues(array $validated, string $fieldName): array
+    {
+        $values = array_values($validated[$fieldName] ?? []);
+        $otherKey = $fieldName.'_other';
+        $otherValue = trim((string) ($validated[$otherKey] ?? ''));
+
+        return array_map(
+            fn (string $value): string => $value === 'Other' && $otherValue !== '' ? 'Other: '.$otherValue : $value,
+            $values,
+        );
+    }
+
+    /**
+     * @param  array<string, mixed>  $validated
+     */
+    private function scalarValue(array $validated, string $fieldName): string
+    {
+        $value = (string) $validated[$fieldName];
+        $otherValue = trim((string) ($validated[$fieldName.'_other'] ?? ''));
+
+        if ($value === 'Other' && $otherValue !== '') {
+            return 'Other: '.$otherValue;
+        }
+
+        return $value;
+    }
+
+    /**
+     * @param  array<int, string>|null  $options
+     */
+    private function hasOtherOption(?array $options): bool
+    {
+        return in_array('Other', $options ?? [], true);
     }
 }

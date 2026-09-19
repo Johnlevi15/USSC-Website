@@ -1,4 +1,7 @@
 *
 !private/
 !public/
+!document-templates/
+document-templates/*
+!document-templates/.gitkeep
 !.gitignore

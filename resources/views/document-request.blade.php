@@ -17,7 +17,7 @@
         </ul>
     </div>
 @endif
-			<form method="POST" action="{{ route('document-request.store') }}" class="space-y-3">
+			<form method="POST" action="{{ route('document-request.store') }}" enctype="multipart/form-data" class="space-y-3">
 				@csrf
 				<label class="block text-xs font-bold text-gray-600 uppercase">
 					Type of Document
@@ -124,12 +124,68 @@ document.getElementById('document_type').addEventListener('change', async functi
         if (['full_name', 'email'].includes(field.field_name)) {
     return;
 }
-            const wrapper = document.createElement('label');
+            const wrapper = document.createElement(field.field_type === 'checkbox' ? 'div' : 'label');
             wrapper.className = 'block text-xs font-bold text-gray-600 uppercase';
 
             const labelSpan = document.createElement('span');
             labelSpan.textContent = field.field_label + (field.is_required ? '' : ' (Optional)');
             wrapper.appendChild(labelSpan);
+
+            if (field.field_type === 'checkbox') {
+                const options = (field.field_options && field.field_options.length)
+                    ? field.field_options
+                    : [field.field_label];
+                const hasOther = options.includes('Other');
+
+                const optionsWrapper = document.createElement('div');
+                optionsWrapper.className = 'mt-2 space-y-2 normal-case';
+
+                options.forEach(opt => {
+                    const optionLabel = document.createElement('label');
+                    optionLabel.className = 'flex items-center gap-2 text-sm font-medium text-gray-700';
+
+                    const checkbox = document.createElement('input');
+                    checkbox.type = 'checkbox';
+                    checkbox.name = field.field_name + '[]';
+                    checkbox.value = opt;
+                    checkbox.className = 'h-4 w-4 rounded border-gray-300 text-red-900 focus:ring-red-900';
+
+                    const optionText = document.createElement('span');
+                    optionText.textContent = opt;
+
+                    optionLabel.appendChild(checkbox);
+                    optionLabel.appendChild(optionText);
+                    optionsWrapper.appendChild(optionLabel);
+                });
+
+                wrapper.appendChild(optionsWrapper);
+
+                if (hasOther) {
+                    const otherInput = document.createElement('input');
+                    otherInput.type = 'text';
+                    otherInput.name = field.field_name + '_other';
+                    otherInput.placeholder = 'Please specify';
+                    otherInput.className = 'mt-2 hidden w-full rounded-lg border px-3 py-2 text-sm font-normal normal-case';
+
+                    optionsWrapper.addEventListener('change', () => {
+                        const otherCheckbox = optionsWrapper.querySelector(`input[value="Other"]`);
+                        const showOther = otherCheckbox?.checked;
+
+                        otherInput.classList.toggle('hidden', ! showOther);
+                        otherInput.required = Boolean(showOther);
+
+                        if (! showOther) {
+                            otherInput.value = '';
+                        }
+                    });
+
+                    wrapper.appendChild(otherInput);
+                }
+
+                fieldsContainer.appendChild(wrapper);
+
+                return;
+            }
 
             let input;
             if (field.field_type === 'textarea') {
@@ -150,6 +206,14 @@ document.getElementById('document_type').addEventListener('change', async functi
             } else {
                 input = document.createElement('input');
                 input.type = field.field_type;
+
+                if (field.field_type === 'file') {
+                    input.accept = '.pdf,.doc,.docx,.jpg,.jpeg,.png';
+                }
+
+                if (field.field_type === 'image') {
+                    input.accept = 'image/jpeg,image/png,image/webp';
+                }
             }
 
             input.name = field.field_name;
@@ -157,6 +221,28 @@ document.getElementById('document_type').addEventListener('change', async functi
             input.className = 'mt-1 w-full px-3 py-2 text-sm border rounded-lg';
 
             wrapper.appendChild(input);
+
+            if (field.field_type === 'select' && (field.field_options || []).includes('Other')) {
+                const otherInput = document.createElement('input');
+                otherInput.type = 'text';
+                otherInput.name = field.field_name + '_other';
+                otherInput.placeholder = 'Please specify';
+                otherInput.className = 'mt-2 hidden w-full rounded-lg border px-3 py-2 text-sm font-normal normal-case';
+
+                input.addEventListener('change', () => {
+                    const showOther = input.value === 'Other';
+
+                    otherInput.classList.toggle('hidden', ! showOther);
+                    otherInput.required = showOther;
+
+                    if (! showOther) {
+                        otherInput.value = '';
+                    }
+                });
+
+                wrapper.appendChild(otherInput);
+            }
+
             fieldsContainer.appendChild(wrapper);
         });
     } catch (err) {

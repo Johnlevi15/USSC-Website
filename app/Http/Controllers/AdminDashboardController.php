@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\AdminActivityLog;
 use App\Models\Admin;
+use App\Models\AdminActivityLog;
 use App\Models\DocumentRequest;
 use App\Models\Event;
 use App\Models\LostFoundItem;
@@ -37,7 +37,7 @@ class AdminDashboardController extends Controller
     public function documents(): View
     {
         return view('admin.documents', [
-            'requests' => DocumentRequest::with(['user', 'fields', 'reviewer'])
+            'requests' => DocumentRequest::with(['user', 'fields', 'reviewer', 'documentType'])
                 ->latest('request_id')
                 ->paginate(15),
         ]);

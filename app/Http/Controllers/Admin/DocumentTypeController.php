@@ -5,16 +5,17 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\DocumentType;
 use App\Models\DocumentTypeField;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
-use Illuminate\View\View;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
+use Illuminate\View\View;
 
 class DocumentTypeController extends Controller
 {
     public function index(): View
     {
         $documentTypes = DocumentType::withCount('fields')->get();
+
         return view('admin.document-types.index', compact('documentTypes'));
     }
 
@@ -42,6 +43,7 @@ class DocumentTypeController extends Controller
     public function edit(DocumentType $documentType): View
     {
         $documentType->load('fields');
+
         return view('admin.document-types.edit', compact('documentType'));
     }
 
@@ -78,7 +80,7 @@ class DocumentTypeController extends Controller
         $validated = $request->validate([
             'field_name' => ['required', 'string', 'max:100', 'regex:/^[a-z_]+$/'],
             'field_label' => ['required', 'string', 'max:150'],
-            'field_type' => ['required', 'in:text,email,textarea,number,date,select'],
+            'field_type' => ['required', 'in:text,email,textarea,number,date,select,checkbox,file,image'],
             'field_options' => ['nullable', 'json'],
             'is_required' => ['sometimes', 'boolean'],
             'validation_rules' => ['nullable', 'string', 'max:255'],
@@ -86,10 +88,7 @@ class DocumentTypeController extends Controller
 
         $validated['is_required'] = $request->boolean('is_required');
 
-        // Parse field options if JSON string
-        if (is_string($validated['field_options'])) {
-            $validated['field_options'] = json_decode($validated['field_options'], true);
-        }
+        $validated['field_options'] = $this->fieldOptions($validated);
 
         // Get the next display order
         $maxOrder = $documentType->fields()->max('display_order') ?? 0;
@@ -107,7 +106,7 @@ class DocumentTypeController extends Controller
     {
         $validated = $request->validate([
             'field_label' => ['required', 'string', 'max:150'],
-            'field_type' => ['required', 'in:text,email,textarea,number,date,select'],
+            'field_type' => ['required', 'in:text,email,textarea,number,date,select,checkbox,file,image'],
             'field_options' => ['nullable', 'json'],
             'is_required' => ['sometimes', 'boolean'],
             'validation_rules' => ['nullable', 'string', 'max:255'],
@@ -115,10 +114,7 @@ class DocumentTypeController extends Controller
 
         $validated['is_required'] = $request->boolean('is_required');
 
-        // Parse field options if JSON string
-        if (isset($validated['field_options']) && is_string($validated['field_options'])) {
-            $validated['field_options'] = json_decode($validated['field_options'], true);
-        }
+        $validated['field_options'] = $this->fieldOptions($validated);
 
         $field->update($validated);
 
@@ -146,5 +142,36 @@ class DocumentTypeController extends Controller
         }
 
         return back()->with('success', 'Fields reordered successfully.');
+    }
+
+    /**
+     * @param  array{field_type: string, field_options?: string|null}  $validated
+     * @return list<string>|null
+     */
+    private function fieldOptions(array $validated): ?array
+    {
+        $options = isset($validated['field_options']) && is_string($validated['field_options'])
+            ? json_decode($validated['field_options'], true)
+            : null;
+
+        if ($validated['field_type'] === 'checkbox' && ! is_array($options)) {
+            throw ValidationException::withMessages([
+                'field_options' => 'Checkbox fields need at least one option in JSON format, for example ["Yes"].',
+            ]);
+        }
+
+        if (! is_array($options)) {
+            return null;
+        }
+
+        $options = array_values(array_filter($options, fn ($option): bool => is_string($option) && trim($option) !== ''));
+
+        if ($validated['field_type'] === 'checkbox' && $options === []) {
+            throw ValidationException::withMessages([
+                'field_options' => 'Checkbox fields need at least one option.',
+            ]);
+        }
+
+        return $options;
     }
 }

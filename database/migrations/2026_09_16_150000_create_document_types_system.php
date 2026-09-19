@@ -24,7 +24,7 @@ return new class extends Migration
             $table->foreignId('document_type_id')->constrained('document_types')->cascadeOnDelete();
             $table->string('field_name', 100);
             $table->string('field_label', 150);
-            $table->enum('field_type', ['text', 'email', 'textarea', 'number', 'date', 'select']);
+            $table->enum('field_type', ['text', 'email', 'textarea', 'number', 'date', 'select', 'checkbox', 'file', 'image']);
             $table->json('field_options')->nullable();
             $table->boolean('is_required')->default(false);
             $table->string('validation_rules', 255)->nullable();

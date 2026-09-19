@@ -25,7 +25,7 @@ return new class extends Migration
                     Schema::table($table, function (Blueprint $table) use ($constraint): void {
                         $table->dropForeign([$constraint]);
                     });
-                } catch (\Exception $e) {
+                } catch (Exception $e) {
                     // Foreign key might not exist or have different name
                     // Try to drop by column name instead
                     $columnMap = [
@@ -42,7 +42,7 @@ return new class extends Migration
                             Schema::table($table, function (Blueprint $table) use ($columnMap, $constraint): void {
                                 $table->dropForeign([$columnMap[$constraint]]);
                             });
-                        } catch (\Exception $e2) {
+                        } catch (Exception $e2) {
                             // Continue if foreign key doesn't exist
                         }
                     }
@@ -51,21 +51,25 @@ return new class extends Migration
         }
 
         // Step 2: Add remember_token if it doesn't exist
-        if (!Schema::hasColumn('admins', 'remember_token')) {
+        if (! Schema::hasColumn('admins', 'remember_token')) {
             Schema::table('admins', function (Blueprint $table): void {
                 $table->rememberToken()->after('password_hash');
             });
         }
 
-        // Step 3: Make admin_id auto-increment
-        DB::statement('ALTER TABLE admins MODIFY admin_id BIGINT UNSIGNED AUTO_INCREMENT');
+        $isMysql = DB::connection()->getDriverName() === 'mysql';
 
-        // Step 4: Add unique constraint to email if it doesn't exist
-        $indexes = DB::select("SHOW INDEXES FROM admins WHERE Column_name = 'email'");
-        if (empty($indexes)) {
-            Schema::table('admins', function (Blueprint $table): void {
-                $table->unique('email');
-            });
+        if ($isMysql) {
+            // Step 3: Make admin_id auto-increment
+            DB::statement('ALTER TABLE admins MODIFY admin_id BIGINT UNSIGNED AUTO_INCREMENT');
+
+            // Step 4: Add unique constraint to email if it doesn't exist
+            $indexes = DB::select("SHOW INDEXES FROM admins WHERE Column_name = 'email'");
+            if (empty($indexes)) {
+                Schema::table('admins', function (Blueprint $table): void {
+                    $table->unique('email');
+                });
+            }
         }
 
         // Step 5: Re-add foreign key constraints (now referencing the independent admins table)
@@ -90,6 +94,6 @@ return new class extends Migration
 
     public function down(): void
     {
-        throw new \LogicException('This migration cannot be safely reversed. Admins are now independent entities.');
+        throw new LogicException('This migration cannot be safely reversed. Admins are now independent entities.');
     }
 };
