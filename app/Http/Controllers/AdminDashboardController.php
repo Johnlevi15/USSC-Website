@@ -2,16 +2,20 @@
 
 namespace App\Http\Controllers;
 
+use App\Mail\DocumentRequestStatusUpdated;
 use App\Models\Admin;
 use App\Models\AdminActivityLog;
 use App\Models\DocumentRequest;
+use App\Models\EmailNotification;
 use App\Models\Event;
 use App\Models\LostFoundItem;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
+use Throwable;
 
 class AdminDashboardController extends Controller
 {
@@ -40,6 +44,20 @@ class AdminDashboardController extends Controller
             'requests' => DocumentRequest::with(['user', 'fields', 'reviewer', 'documentType'])
                 ->latest('request_id')
                 ->paginate(15),
+        ]);
+    }
+
+    public function reviewDocument(DocumentRequest $documentRequest): View
+    {
+        $documentRequest->load([
+            'user',
+            'fields',
+            'reviewer',
+            'documentType.fields',
+        ]);
+
+        return view('admin.document-review', [
+            'documentRequest' => $documentRequest,
         ]);
     }
 
@@ -78,16 +96,93 @@ class AdminDashboardController extends Controller
     {
         $validated = $request->validate([
             'status' => ['required', 'in:pending,review,approved,ready,rejected'],
+            'admin_remarks' => ['nullable', 'string', 'max:2000', 'required_if:status,rejected'],
+            'notify_student' => ['sometimes', 'boolean'],
+        ], [
+            'admin_remarks.required_if' => 'Please provide a rejection reason before marking this request as rejected.',
         ]);
+
+        $adminId = $this->adminId($request);
 
         $documentRequest->update([
             'status' => $validated['status'],
-            'reviewed_by' => $this->adminId($request),
+            'reviewed_by' => $adminId,
+            'admin_remarks' => filled($validated['admin_remarks'] ?? null)
+                ? trim($validated['admin_remarks'])
+                : null,
         ]);
 
-        $this->record($request, 'document_reviewed', "Updated document request #{$documentRequest->request_id} to {$validated['status']}.", $documentRequest);
+        $statusLabels = [
+            'pending' => 'Pending',
+            'review' => 'Under Review',
+            'approved' => 'Approved',
+            'ready' => 'Ready for Pickup',
+            'rejected' => 'Rejected',
+        ];
 
-        return redirect()->route('admin.documents')->with('success', 'Document request status updated.');
+        $statusLabel = $statusLabels[$validated['status']] ?? $validated['status'];
+
+        $this->record(
+            $request,
+            'document_reviewed',
+            "Updated document request #{$documentRequest->request_id} to {$statusLabel}.",
+            $documentRequest,
+        );
+
+        $message = 'Document review saved.';
+
+        if ($request->boolean('notify_student')) {
+            $documentRequest->load(['user', 'documentType']);
+            $recipientEmail = $documentRequest->user?->email;
+
+            if (blank($recipientEmail)) {
+                EmailNotification::create([
+                    'request_id' => $documentRequest->request_id,
+                    'user_id' => $documentRequest->user_id,
+                    'sent_by' => $adminId,
+                    'status' => 'failed',
+                    'sent_at' => null,
+                ]);
+
+                $message .= ' The review was saved, but the student has no email address to notify.';
+            } else {
+                try {
+                    Mail::to($recipientEmail)
+                        ->send(new DocumentRequestStatusUpdated($documentRequest));
+
+                    EmailNotification::create([
+                        'request_id' => $documentRequest->request_id,
+                        'user_id' => $documentRequest->user_id,
+                        'sent_by' => $adminId,
+                        'status' => 'sent',
+                        'sent_at' => now(),
+                    ]);
+
+                    $this->record(
+                        $request,
+                        'document_notification_sent',
+                        "Sent a status update for document request #{$documentRequest->request_id} to {$recipientEmail}.",
+                        $documentRequest,
+                    );
+
+                    $message .= ' Student notification sent.';
+                } catch (Throwable $exception) {
+                    report($exception);
+
+                    EmailNotification::create([
+                        'request_id' => $documentRequest->request_id,
+                        'user_id' => $documentRequest->user_id,
+                        'sent_by' => $adminId,
+                        'status' => 'failed',
+                        'sent_at' => null,
+                    ]);
+
+                    $message .= ' The review was saved, but the email notification could not be sent.';
+                }
+            }
+        }
+
+        return redirect()->route('admin.documents.review', $documentRequest)->with('success', $message);
     }
 
     public function updateLostFound(Request $request, LostFoundItem $lostFoundItem): RedirectResponse
@@ -97,7 +192,7 @@ class AdminDashboardController extends Controller
             'status' => ['required', 'in:lost,found,claimed'],
         ]);
 
-        if ($validated['status'] === 'claimed' && $lostFoundItem->status !== 'found') {
+        if ($validated['status'] === 'claimed' && ! in_array($lostFoundItem->status, ['found', 'claimed'], true)) {
             throw ValidationException::withMessages([
                 'status' => 'Only found items can be marked as claimed.',
             ]);
@@ -132,6 +227,44 @@ class AdminDashboardController extends Controller
         $this->record($request, 'event_created', "Published event: {$event->title}.", $event);
 
         return redirect()->route('admin.events')->with('success', 'Event published to the student calendar.');
+    }
+
+    public function editEvent(Event $event): View
+    {
+        $event->load('creator');
+
+        return view('admin.event-edit', [
+            'event' => $event,
+        ]);
+    }
+
+    public function updateEvent(Request $request, Event $event): RedirectResponse
+    {
+        $validated = $request->validate([
+            'title' => ['required', 'string', 'max:150'],
+            'description' => ['nullable', 'string', 'max:5000'],
+            'event_date' => ['required', 'date'],
+            'start_time' => ['required', 'date_format:H:i'],
+            'end_time' => ['required', 'date_format:H:i', 'after:start_time'],
+        ]);
+
+        $event->update($validated);
+
+        $this->record($request, 'event_updated', "Updated event: {$event->title}.", $event);
+
+        return redirect()->route('admin.events')->with('success', 'Event updated successfully.');
+    }
+
+    public function destroyEvent(Request $request, Event $event): RedirectResponse
+    {
+        $eventTitle = $event->title;
+
+        // Record the action before deleting so the event still exists when the log is created.
+        $this->record($request, 'event_deleted', "Deleted event: {$eventTitle}.", $event);
+
+        $event->delete();
+
+        return redirect()->route('admin.events')->with('success', 'Event deleted from the student calendar.');
     }
 
     private function record(Request $request, string $action, string $description, Model $subject): void

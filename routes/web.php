@@ -67,6 +67,7 @@ Route::middleware(['auth:admin', 'admin'])->group(function (): void {
     });
 
     Route::get('/admin/document-requests', [AdminDashboardController::class, 'documents'])->name('admin.documents');
+    Route::get('/admin/document-requests/{documentRequest}', [AdminDashboardController::class, 'reviewDocument'])->name('admin.documents.review');
     Route::patch('/admin/document-requests/{documentRequest}', [AdminDashboardController::class, 'updateDocument'])->name('admin.documents.update');
 
     Route::get('/admin/lost-found', [AdminDashboardController::class, 'lostFound'])->name('admin.lost-found');
@@ -74,6 +75,9 @@ Route::middleware(['auth:admin', 'admin'])->group(function (): void {
 
     Route::get('/admin/events', [AdminDashboardController::class, 'events'])->name('admin.events');
     Route::post('/admin/events', [AdminDashboardController::class, 'storeEvent'])->name('admin.events.store');
+    Route::get('/admin/events/{event}/edit', [AdminDashboardController::class, 'editEvent'])->name('admin.events.edit');
+    Route::put('/admin/events/{event}', [AdminDashboardController::class, 'updateEvent'])->name('admin.events.update');
+    Route::delete('/admin/events/{event}', [AdminDashboardController::class, 'destroyEvent'])->name('admin.events.destroy');
 
     Route::get('/admin/logs', [AdminDashboardController::class, 'logs'])->name('admin.logs');
 
