@@ -7,6 +7,8 @@ use App\Models\DocumentType;
 use App\Models\DocumentTypeField;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 
@@ -14,7 +16,7 @@ class DocumentTypeController extends Controller
 {
     public function index(): View
     {
-        $documentTypes = DocumentType::withCount('fields')->get();
+        $documentTypes = DocumentType::withCount(['fields', 'documentRequests'])->get();
 
         return view('admin.document-types.index', compact('documentTypes'));
     }
@@ -65,14 +67,27 @@ class DocumentTypeController extends Controller
 
     public function destroy(DocumentType $documentType): RedirectResponse
     {
-        if ($documentType->documentRequests()->count() > 0) {
+        $requestCount = $documentType->documentRequests()->count();
+
+        if ($requestCount > 0 && ! request()->boolean('delete_requests')) {
             return back()->with('error', 'Cannot delete document type with existing requests.');
         }
 
-        $documentType->delete();
+        DB::transaction(function () use ($documentType): void {
+            $documentType->documentRequests()
+                ->select('request_id')
+                ->each(function ($documentRequest): void {
+                    Storage::disk('local')->deleteDirectory("document-uploads/{$documentRequest->request_id}");
+                    $documentRequest->delete();
+                });
+
+            $documentType->delete();
+        });
 
         return redirect()->route('admin.document-types.index')
-            ->with('success', 'Document type deleted successfully.');
+            ->with('success', $requestCount > 0
+                ? "Document type and {$requestCount} existing request(s) deleted successfully."
+                : 'Document type deleted successfully.');
     }
 
     public function addField(Request $request, DocumentType $documentType): RedirectResponse

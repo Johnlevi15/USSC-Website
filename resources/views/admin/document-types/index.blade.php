@@ -20,6 +20,7 @@
                     <tr>
                         <th class="px-4 py-3">Name</th>
                         <th class="px-4 py-3">Fields</th>
+                        <th class="px-4 py-3">Requests</th>
                         <th class="px-4 py-3">Status</th>
                         <th class="px-4 py-3 text-right">Actions</th>
                     </tr>
@@ -29,6 +30,7 @@
                     <tr class="hover:bg-gray-50">
                         <td class="px-4 py-3 font-medium">{{ $type->name }}</td>
                         <td class="px-4 py-3 text-gray-500">{{ $type->fields_count }}</td>
+                        <td class="px-4 py-3 text-gray-500">{{ $type->document_requests_count }}</td>
                         <td class="px-4 py-3">
                             @if($type->is_active)
                                 <span class="inline-flex items-center rounded-full bg-green-100 px-2 py-0.5 text-xs font-semibold text-green-800">Active</span>
@@ -40,9 +42,18 @@
                             <a href="{{ route('admin.document-types.edit', $type) }}" class="text-red-900 hover:underline font-semibold text-xs">
                                 <i class="fa-solid fa-pen mr-1"></i> Edit
                             </a>
-                            <form method="POST" action="{{ route('admin.document-types.destroy', $type) }}" class="inline" onsubmit="return confirm('Delete this document type?')">
+                            <form
+                                method="POST"
+                                action="{{ route('admin.document-types.destroy', $type) }}"
+                                class="inline document-type-delete-form"
+                                data-name="{{ $type->name }}"
+                                data-requests="{{ $type->document_requests_count }}"
+                            >
                                 @csrf @method('DELETE')
-                                <button class="ml-3 text-red-600 hover:underline font-semibold text-xs">
+                                @if($type->document_requests_count > 0)
+                                    <input type="hidden" name="delete_requests" value="1">
+                                @endif
+                                <button type="submit" class="ml-3 text-red-600 hover:underline font-semibold text-xs">
                                     <i class="fa-solid fa-trash mr-1"></i> Delete
                                 </button>
                             </form>
@@ -54,4 +65,84 @@
         </div>
     @endif
 </div>
+
+<div id="deleteDocumentTypeModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/60 p-4" role="dialog" aria-modal="true" aria-labelledby="deleteDocumentTypeTitle">
+    <div class="w-full max-w-md rounded-xl bg-white shadow-xl">
+        <div class="border-b px-5 py-4">
+            <h2 id="deleteDocumentTypeTitle" class="text-lg font-bold text-gray-900">Delete Document Type</h2>
+            <p class="mt-1 text-sm text-gray-500">This action cannot be undone.</p>
+        </div>
+
+        <div class="space-y-3 p-5">
+            <p class="text-sm text-gray-700">
+                You are about to delete <span id="deleteDocumentTypeName" class="font-bold text-gray-900"></span>.
+            </p>
+            <p id="deleteDocumentTypeRequests" class="hidden rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800"></p>
+        </div>
+
+        <div class="flex flex-col-reverse gap-2 border-t bg-gray-50 px-5 py-4 sm:flex-row sm:justify-end">
+            <button type="button" id="cancelDeleteDocumentType" class="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-bold text-gray-700 hover:bg-gray-50">
+                Cancel
+            </button>
+            <button type="button" id="confirmDeleteDocumentType" class="rounded-lg bg-red-900 px-4 py-2 text-sm font-bold text-white hover:bg-red-800">
+                Delete
+            </button>
+        </div>
+    </div>
+</div>
 @endsection
+
+@push('scripts')
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const modal = document.getElementById('deleteDocumentTypeModal');
+        const nameTarget = document.getElementById('deleteDocumentTypeName');
+        const requestsTarget = document.getElementById('deleteDocumentTypeRequests');
+        const cancelButton = document.getElementById('cancelDeleteDocumentType');
+        const confirmButton = document.getElementById('confirmDeleteDocumentType');
+        let pendingForm = null;
+
+        const closeModal = () => {
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+            pendingForm = null;
+        };
+
+        document.querySelectorAll('.document-type-delete-form').forEach((form) => {
+            form.addEventListener('submit', (event) => {
+                event.preventDefault();
+                pendingForm = form;
+
+                const requestCount = Number(form.dataset.requests || 0);
+                nameTarget.textContent = form.dataset.name || 'this document type';
+
+                requestsTarget.classList.toggle('hidden', requestCount === 0);
+                requestsTarget.textContent = requestCount > 0
+                    ? `This will also delete ${requestCount} existing request${requestCount === 1 ? '' : 's'} connected to this document type.`
+                    : '';
+
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
+                confirmButton.focus();
+            });
+        });
+
+        cancelButton.addEventListener('click', closeModal);
+        modal.addEventListener('click', (event) => {
+            if (event.target === modal) {
+                closeModal();
+            }
+        });
+        document.addEventListener('keydown', (event) => {
+            if (event.key === 'Escape' && ! modal.classList.contains('hidden')) {
+                closeModal();
+            }
+        });
+        confirmButton.addEventListener('click', () => {
+            if (pendingForm) {
+                pendingForm.submit();
+            }
+        });
+    });
+</script>
+@endpush

@@ -80,4 +80,68 @@
             @endif
         </div>
     </div>
+
+    @if(session('success') && request('code'))
+        <div id="trackingSuccessModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" role="dialog" aria-modal="true" aria-labelledby="trackingSuccessTitle">
+            <div class="w-full max-w-md overflow-hidden rounded-2xl bg-white shadow-2xl">
+                <div class="bg-red-900 px-6 py-5 text-center text-white">
+                    <div class="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-white/15">
+                        <i class="fa-solid fa-circle-check text-xl"></i>
+                    </div>
+                    <h3 id="trackingSuccessTitle" class="text-lg font-extrabold">Request Submitted Successfully</h3>
+                    <p class="mt-1 text-sm text-red-100">Your document request has been received.</p>
+                </div>
+
+                <div class="space-y-4 p-6">
+                    <div class="rounded-xl border-2 border-red-100 bg-red-50 p-4 text-center">
+                        <p class="text-xs font-extrabold uppercase tracking-wide text-red-900">Tracking Number</p>
+                        <p class="mt-2 break-all font-mono text-3xl font-black text-red-950">{{ request('code') }}</p>
+                    </div>
+
+                    <div class="rounded-lg border border-yellow-200 bg-yellow-50 p-4 text-sm leading-6 text-yellow-900">
+                        <p class="font-bold">Save this tracking number.</p>
+                        <p class="mt-1">Please copy it, save a copy, or take a screenshot. You will need this number to track your request status later.</p>
+                    </div>
+
+                    <div class="flex flex-col gap-2 sm:flex-row">
+                        <button type="button" onclick="copyTrackingNumber(event)" class="flex-1 rounded-lg bg-gray-100 px-4 py-2.5 text-sm font-bold text-gray-700 hover:bg-gray-200">
+                            Copy Number
+                        </button>
+                        <button type="button" onclick="closeTrackingSuccessModal()" class="flex-1 rounded-lg bg-red-900 px-4 py-2.5 text-sm font-bold text-white hover:bg-red-800">
+                            I Saved It
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    @endif
+
+    @if(session('success') && request('code'))
+        @push('scripts')
+            <script>
+                function copyTrackingNumber(event) {
+                    const trackingCode = '{{ request('code') }}';
+
+                    navigator.clipboard.writeText(trackingCode).then(() => {
+                        const button = event.currentTarget;
+                        const originalText = button.textContent;
+
+                        button.textContent = 'Copied!';
+                        button.classList.add('bg-green-100', 'text-green-700');
+                        button.classList.remove('bg-gray-100', 'text-gray-700');
+
+                        setTimeout(() => {
+                            button.textContent = originalText;
+                            button.classList.remove('bg-green-100', 'text-green-700');
+                            button.classList.add('bg-gray-100', 'text-gray-700');
+                        }, 2000);
+                    });
+                }
+
+                function closeTrackingSuccessModal() {
+                    document.getElementById('trackingSuccessModal')?.remove();
+                }
+            </script>
+        @endpush
+    @endif
 @endsection

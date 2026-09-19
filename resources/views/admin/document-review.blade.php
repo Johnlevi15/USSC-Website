@@ -82,7 +82,20 @@
                         @endphp
                         <div class="grid grid-cols-1 gap-1 px-5 py-4 sm:grid-cols-[220px_1fr] sm:gap-6">
                             <p class="text-xs font-bold uppercase tracking-wide text-gray-500">{{ $label }}</p>
-                            <p class="whitespace-pre-line break-words text-sm text-gray-900">{{ $field->field_value }}</p>
+                            <div>
+                                @if($definition?->field_type === 'image')
+                                    <a href="{{ route('admin.documents.attachments.show', ['documentRequest' => $documentRequest, 'fieldName' => $field->field_name]) }}" target="_blank" rel="noopener" class="block overflow-hidden rounded-lg border border-gray-200 bg-gray-50">
+                                        <img src="{{ route('admin.documents.attachments.show', ['documentRequest' => $documentRequest, 'fieldName' => $field->field_name]) }}" alt="{{ $label }}" class="max-h-96 w-full object-contain">
+                                    </a>
+                                @elseif($definition?->field_type === 'file')
+                                    <a href="{{ route('admin.documents.attachments.show', ['documentRequest' => $documentRequest, 'fieldName' => $field->field_name]) }}" target="_blank" rel="noopener" class="inline-flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm font-bold text-red-900 hover:bg-red-100">
+                                        <i class="fa-solid fa-paperclip"></i>
+                                        Open Attachment
+                                    </a>
+                                @else
+                                    <p class="whitespace-pre-line break-words text-sm text-gray-900">{{ $field->field_value }}</p>
+                                @endif
+                            </div>
                         </div>
                     @endforeach
                 </div>
@@ -149,6 +162,7 @@
                     Save Review
                 </button>
             </form>
+
         </div>
     </aside>
 </div>

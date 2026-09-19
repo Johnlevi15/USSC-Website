@@ -4,8 +4,10 @@ namespace Tests\Feature;
 
 use App\Models\Admin;
 use App\Models\Document;
+use App\Models\DocumentRequest;
 use App\Models\DocumentType;
 use App\Models\DocumentTypeField;
+use App\Models\User;
 use Illuminate\Foundation\Testing\LazilyRefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
@@ -41,6 +43,27 @@ class DocumentRequestFormTest extends TestCase
         ])
             ->assertRedirect('/document-request')
             ->assertSessionHasErrors('document_type_id');
+    }
+
+    public function test_document_request_submission_shows_tracking_number_save_instruction(): void
+    {
+        $documentType = DocumentType::create([
+            'name' => 'Document Fee Request Form',
+            'description' => 'Standard form',
+            'is_active' => true,
+        ]);
+
+        $this->followingRedirects()
+            ->post('/document-request', [
+                'document_type_id' => $documentType->id,
+                'full_name' => 'Taylor Student',
+                'email' => 'taylor@example.test',
+            ])
+            ->assertOk()
+            ->assertSeeText('Request Submitted Successfully')
+            ->assertSeeText('Tracking Number')
+            ->assertSeeText('Please copy it, save a copy, or take a screenshot.')
+            ->assertSee('USSC-'.now()->year.'-0001');
     }
 
     public function test_admin_can_create_a_checkbox_field_for_a_document_type(): void
@@ -117,6 +140,122 @@ class DocumentRequestFormTest extends TestCase
             'is_required' => true,
             'validation_rules' => 'max:255',
         ]);
+    }
+
+    public function test_admin_can_delete_an_unused_document_type(): void
+    {
+        $admin = Admin::create([
+            'name' => 'Portal Administrator',
+            'email' => 'admin@example.test',
+            'password_hash' => 'not-used',
+        ]);
+
+        $documentType = DocumentType::create([
+            'name' => 'Unused Request',
+            'description' => 'No requests use this type',
+            'is_active' => true,
+        ]);
+
+        $this->actingAs($admin, 'admin')
+            ->delete(route('admin.document-types.destroy', $documentType))
+            ->assertRedirect(route('admin.document-types.index'))
+            ->assertSessionHas('success', 'Document type deleted successfully.');
+
+        $this->assertDatabaseMissing('document_types', [
+            'id' => $documentType->id,
+        ]);
+    }
+
+    public function test_admin_cannot_delete_a_document_type_with_existing_requests(): void
+    {
+        $admin = Admin::create([
+            'name' => 'Portal Administrator',
+            'email' => 'admin@example.test',
+            'password_hash' => 'not-used',
+        ]);
+
+        $user = User::create([
+            'name' => 'Taylor Student',
+            'email' => 'taylor@example.test',
+        ]);
+
+        $documentType = DocumentType::create([
+            'name' => 'Used Request',
+            'description' => 'A request uses this type',
+            'is_active' => true,
+        ]);
+
+        DocumentRequest::create([
+            'user_id' => $user->id,
+            'document_type_id' => $documentType->id,
+            'status' => 'pending',
+        ]);
+
+        $this->actingAs($admin, 'admin')
+            ->from(route('admin.document-types.index'))
+            ->delete(route('admin.document-types.destroy', $documentType))
+            ->assertRedirect(route('admin.document-types.index'))
+            ->assertSessionHas('error', 'Cannot delete document type with existing requests.');
+
+        $this->assertDatabaseHas('document_types', [
+            'id' => $documentType->id,
+        ]);
+    }
+
+    public function test_admin_can_delete_a_document_type_with_existing_requests_when_confirmed(): void
+    {
+        Storage::fake('local');
+
+        $admin = Admin::create([
+            'name' => 'Portal Administrator',
+            'email' => 'admin@example.test',
+            'password_hash' => 'not-used',
+        ]);
+
+        $user = User::create([
+            'name' => 'Taylor Student',
+            'email' => 'taylor@example.test',
+        ]);
+
+        $documentType = DocumentType::create([
+            'name' => 'Used Request',
+            'description' => 'A request uses this type',
+            'is_active' => true,
+        ]);
+
+        $documentRequest = DocumentRequest::create([
+            'user_id' => $user->id,
+            'document_type_id' => $documentType->id,
+            'status' => 'pending',
+        ]);
+
+        $storedPath = "document-uploads/{$documentRequest->request_id}/registration.pdf";
+        Storage::disk('local')->put($storedPath, 'registration file');
+
+        Document::create([
+            'request_id' => $documentRequest->request_id,
+            'field_name' => 'registration_form',
+            'field_value' => $storedPath,
+        ]);
+
+        $this->actingAs($admin, 'admin')
+            ->delete(route('admin.document-types.destroy', $documentType), [
+                'delete_requests' => '1',
+            ])
+            ->assertRedirect(route('admin.document-types.index'))
+            ->assertSessionHas('success', 'Document type and 1 existing request(s) deleted successfully.');
+
+        $this->assertDatabaseMissing('document_types', [
+            'id' => $documentType->id,
+        ]);
+        $this->assertDatabaseMissing('document_requests', [
+            'request_id' => $documentRequest->request_id,
+        ]);
+        $this->assertDatabaseMissing('document', [
+            'request_id' => $documentRequest->request_id,
+            'field_name' => 'registration_form',
+        ]);
+        Storage::disk('local')->assertMissing($storedPath);
     }
 
     public function test_admin_can_create_a_file_upload_field_for_a_document_type(): void
@@ -279,5 +418,68 @@ class DocumentRequestFormTest extends TestCase
             ->where('field_name', 'registration_form')
             ->value('field_value');
         Storage::disk('local')->assertExists($storedPath);
+    }
+
+    public function test_admin_can_view_document_request_file_attachment(): void
+    {
+        Storage::fake('local');
+
+        $admin = Admin::create([
+            'name' => 'Portal Administrator',
+            'email' => 'admin@example.test',
+            'password_hash' => 'not-used',
+        ]);
+
+        $user = User::create([
+            'name' => 'Taylor Student',
+            'email' => 'taylor@example.test',
+        ]);
+
+        $documentType = DocumentType::create([
+            'name' => 'Scholarship Request',
+            'description' => 'Scholarship form',
+            'is_active' => true,
+        ]);
+
+        DocumentTypeField::create([
+            'document_type_id' => $documentType->id,
+            'field_name' => 'registration_form',
+            'field_label' => 'Registration Form',
+            'field_type' => 'file',
+            'is_required' => true,
+            'display_order' => 1,
+        ]);
+
+        $documentRequest = DocumentRequest::create([
+            'user_id' => $user->id,
+            'document_type_id' => $documentType->id,
+            'status' => 'pending',
+        ]);
+
+        $storedPath = "document-uploads/{$documentRequest->request_id}/registration.pdf";
+        Storage::disk('local')->put($storedPath, 'registration file');
+
+        Document::create([
+            'request_id' => $documentRequest->request_id,
+            'field_name' => 'registration_form',
+            'field_value' => $storedPath,
+        ]);
+
+        $attachmentUrl = route('admin.documents.attachments.show', [
+            'documentRequest' => $documentRequest,
+            'fieldName' => 'registration_form',
+        ]);
+
+        $this->actingAs($admin, 'admin')
+            ->get(route('admin.documents.review', $documentRequest))
+            ->assertOk()
+            ->assertSee('Open Attachment')
+            ->assertSee($attachmentUrl);
+
+        $response = $this->actingAs($admin, 'admin')
+            ->get($attachmentUrl)
+            ->assertOk();
+
+        $this->assertStringContainsString('registration file', $response->streamedContent());
     }
 }

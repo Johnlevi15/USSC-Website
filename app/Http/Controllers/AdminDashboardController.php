@@ -13,8 +13,11 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 use Throwable;
 
 class AdminDashboardController extends Controller
@@ -58,6 +61,30 @@ class AdminDashboardController extends Controller
 
         return view('admin.document-review', [
             'documentRequest' => $documentRequest,
+        ]);
+    }
+
+    public function viewDocumentAttachment(DocumentRequest $documentRequest, string $fieldName): StreamedResponse
+    {
+        $documentRequest->loadMissing('documentType.fields');
+
+        $field = $documentRequest->fields()
+            ->where('field_name', $fieldName)
+            ->firstOrFail();
+        $definition = $documentRequest->documentType?->fields->firstWhere('field_name', $fieldName);
+
+        abort_unless($definition && in_array($definition->field_type, ['file', 'image'], true), 404);
+
+        $path = (string) $field->field_value;
+        abort_unless(Str::startsWith($path, "document-uploads/{$documentRequest->request_id}/"), 404);
+        abort_unless(Storage::disk('local')->exists($path), 404);
+
+        $extension = pathinfo($path, PATHINFO_EXTENSION);
+        $filename = Str::slug($definition->field_label ?: $fieldName).($extension ? ".{$extension}" : '');
+
+        return Storage::disk('local')->response($path, $filename, [
+            'Content-Disposition' => 'inline; filename="'.$filename.'"',
+            'X-Content-Type-Options' => 'nosniff',
         ]);
     }
 

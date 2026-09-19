@@ -67,6 +67,7 @@ Route::middleware(['auth:admin', 'admin'])->group(function (): void {
     });
 
     Route::get('/admin/document-requests', [AdminDashboardController::class, 'documents'])->name('admin.documents');
+    Route::get('/admin/document-requests/{documentRequest}/attachments/{fieldName}', [AdminDashboardController::class, 'viewDocumentAttachment'])->name('admin.documents.attachments.show');
     Route::get('/admin/document-requests/{documentRequest}', [AdminDashboardController::class, 'reviewDocument'])->name('admin.documents.review');
     Route::patch('/admin/document-requests/{documentRequest}', [AdminDashboardController::class, 'updateDocument'])->name('admin.documents.update');
 
