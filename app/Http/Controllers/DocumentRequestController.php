@@ -95,6 +95,7 @@ class DocumentRequestController extends Controller
                         $field->is_required ? 'required' : 'nullable',
                         'file',
                         'mimes:pdf,doc,docx,jpg,jpeg,png',
+                        'extensions:pdf,doc,docx,jpg,jpeg,png',
                         'max:5120',
                     ];
 
@@ -106,6 +107,7 @@ class DocumentRequestController extends Controller
                         $field->is_required ? 'required' : 'nullable',
                         'image',
                         'mimes:jpg,jpeg,png,webp',
+                        'extensions:jpg,jpeg,png,webp',
                         'max:5120',
                     ];
 

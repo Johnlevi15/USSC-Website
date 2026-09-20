@@ -420,6 +420,40 @@ class DocumentRequestFormTest extends TestCase
         Storage::disk('local')->assertExists($storedPath);
     }
 
+    public function test_document_request_form_rejects_uploaded_file_with_disallowed_extension(): void
+    {
+        Storage::fake('local');
+
+        $documentType = DocumentType::create([
+            'name' => 'Scholarship Request',
+            'description' => 'Scholarship form',
+            'is_active' => true,
+        ]);
+
+        DocumentTypeField::create([
+            'document_type_id' => $documentType->id,
+            'field_name' => 'registration_form',
+            'field_label' => 'Registration Form',
+            'field_type' => 'file',
+            'is_required' => true,
+            'display_order' => 1,
+        ]);
+
+        $this->from('/document-request')->post('/document-request', [
+            'document_type_id' => $documentType->id,
+            'full_name' => 'Taylor Student',
+            'email' => 'taylor@example.test',
+            'registration_form' => UploadedFile::fake()->create('registration.php', 100, 'application/pdf'),
+        ])
+            ->assertRedirect('/document-request')
+            ->assertSessionHasErrors('registration_form');
+
+        $this->assertDatabaseMissing('document', [
+            'field_name' => 'registration_form',
+        ]);
+        Storage::disk('local')->assertDirectoryEmpty('/');
+    }
+
     public function test_admin_can_view_document_request_file_attachment(): void
     {
         Storage::fake('local');
@@ -478,8 +512,60 @@ class DocumentRequestFormTest extends TestCase
 
         $response = $this->actingAs($admin, 'admin')
             ->get($attachmentUrl)
-            ->assertOk();
+            ->assertOk()
+            ->assertHeader('Pragma', 'no-cache')
+            ->assertHeader('X-Content-Type-Options', 'nosniff')
+            ->assertHeader('X-Robots-Tag', 'noindex, nofollow, noarchive');
 
+        $cacheControl = (string) $response->headers->get('Cache-Control');
+
+        $this->assertStringContainsString('no-store', $cacheControl);
+        $this->assertStringContainsString('private', $cacheControl);
         $this->assertStringContainsString('registration file', $response->streamedContent());
+    }
+
+    public function test_document_request_file_attachment_requires_admin_authentication(): void
+    {
+        Storage::fake('local');
+
+        $user = User::create([
+            'name' => 'Taylor Student',
+            'email' => 'taylor@example.test',
+        ]);
+
+        $documentType = DocumentType::create([
+            'name' => 'Scholarship Request',
+            'description' => 'Scholarship form',
+            'is_active' => true,
+        ]);
+
+        DocumentTypeField::create([
+            'document_type_id' => $documentType->id,
+            'field_name' => 'registration_form',
+            'field_label' => 'Registration Form',
+            'field_type' => 'file',
+            'is_required' => true,
+            'display_order' => 1,
+        ]);
+
+        $documentRequest = DocumentRequest::create([
+            'user_id' => $user->id,
+            'document_type_id' => $documentType->id,
+            'status' => 'pending',
+        ]);
+
+        $storedPath = "document-uploads/{$documentRequest->request_id}/registration.pdf";
+        Storage::disk('local')->put($storedPath, 'registration file');
+
+        Document::create([
+            'request_id' => $documentRequest->request_id,
+            'field_name' => 'registration_form',
+            'field_value' => $storedPath,
+        ]);
+
+        $this->get(route('admin.documents.attachments.show', [
+            'documentRequest' => $documentRequest,
+            'fieldName' => 'registration_form',
+        ]))->assertRedirect();
     }
 }

@@ -73,6 +73,14 @@ return [
             'replace_placeholders' => true,
         ],
 
+        'security' => [
+            'driver' => 'daily',
+            'path' => storage_path('logs/security.log'),
+            'level' => env('LOG_SECURITY_LEVEL', 'warning'),
+            'max_files' => env('LOG_SECURITY_DAYS', 30),
+            'replace_placeholders' => true,
+        ],
+
         'monthly' => [
             'driver' => 'monthly',
             'path' => storage_path('logs/laravel.log'),

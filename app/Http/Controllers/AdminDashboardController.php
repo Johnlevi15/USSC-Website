@@ -83,8 +83,11 @@ class AdminDashboardController extends Controller
         $filename = Str::slug($definition->field_label ?: $fieldName).($extension ? ".{$extension}" : '');
 
         return Storage::disk('local')->response($path, $filename, [
+            'Cache-Control' => 'no-store, private',
             'Content-Disposition' => 'inline; filename="'.$filename.'"',
+            'Pragma' => 'no-cache',
             'X-Content-Type-Options' => 'nosniff',
+            'X-Robots-Tag' => 'noindex, nofollow, noarchive',
         ]);
     }
 

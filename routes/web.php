@@ -20,15 +20,21 @@ Route::get('/', [EventController::class, 'calendar'])->name('home');
 
 Route::get('/lost-found', [LostFoundItemController::class, 'browse'])->name('lost-found');
 Route::get('/report-item', [LostFoundItemController::class, 'create'])->name('report-item');
-Route::post('/report-item', [LostFoundItemController::class, 'store'])->name('report-item.store');
+Route::post('/report-item', [LostFoundItemController::class, 'store'])
+    ->middleware('throttle:uploads')
+    ->name('report-item.store');
 
 Route::get('/document-request', [DocumentRequestController::class, 'create'])->name('document-request');
 Route::get('/document-types/{documentType}/fields', [DocumentRequestController::class, 'getFields'])->name('document-types.fields');
-Route::post('/document-request', [DocumentRequestController::class, 'store'])->name('document-request.store');
+Route::post('/document-request', [DocumentRequestController::class, 'store'])
+    ->middleware('throttle:uploads')
+    ->name('document-request.store');
 
 Route::get('/track-request', [DocumentRequestController::class, 'track'])->name('track-request');
 
-Route::post('/chatbot/message', [ChatbotController::class, 'reply'])->name('chatbot.reply');
+Route::post('/chatbot/message', [ChatbotController::class, 'reply'])
+    ->middleware('throttle:chatbot')
+    ->name('chatbot.reply');
 
 /*
 |--------------------------------------------------------------------------
@@ -38,7 +44,9 @@ Route::post('/chatbot/message', [ChatbotController::class, 'reply'])->name('chat
 | Authorized administrators access /admin-login directly.
 */
 Route::get('/admin-login', [AdminAuthController::class, 'create'])->name('admin-login');
-Route::post('/admin-login', [AdminAuthController::class, 'store'])->name('admin-login.store');
+Route::post('/admin-login', [AdminAuthController::class, 'store'])
+    ->middleware('throttle:admin-login')
+    ->name('admin-login.store');
 Route::post('/admin-logout', [AdminAuthController::class, 'destroy'])
     ->middleware('auth:admin')
     ->name('admin-logout');
@@ -50,7 +58,7 @@ Route::post('/admin-logout', [AdminAuthController::class, 'destroy'])
 | These routes are inaccessible until the administrator authenticates using
 | the admin guard. Students never need to log in to use the public portal.
 */
-Route::middleware(['auth:admin', 'admin'])->group(function (): void {
+Route::middleware(['auth:admin', 'admin', 'admin.no-cache'])->group(function (): void {
     Route::get('/admin', [AdminDashboardController::class, 'dashboard'])->name('admin.dashboard');
 
     Route::prefix('admin/document-types')->name('admin.document-types.')->group(function (): void {

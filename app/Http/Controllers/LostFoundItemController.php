@@ -41,7 +41,7 @@ class LostFoundItemController extends Controller
                 'item_name' => ['required', 'string', 'max:150'],
                 'category' => ['required', 'string', 'max:100'],
                 'description' => ['required', 'string'],
-                'image' => ['sometimes', 'nullable', 'image', 'mimes:jpeg,jpg,png,webp', 'max:5120'],
+                'image' => ['sometimes', 'nullable', 'image', 'mimes:jpeg,jpg,png,webp', 'extensions:jpeg,jpg,png,webp', 'max:5120'],
                 'status' => ['required', 'in:lost,found'],
                 'place' => ['required', 'string', 'max:255'],
             ]);
@@ -75,7 +75,7 @@ class LostFoundItemController extends Controller
             'item_name' => ['required', 'string', 'max:150'],
             'category' => ['required', 'string', 'max:100'],
             'description' => ['required', 'string'],
-            'image' => ['sometimes', 'nullable', 'image', 'mimes:jpeg,jpg,png,webp', 'max:5120'],
+            'image' => ['sometimes', 'nullable', 'image', 'mimes:jpeg,jpg,png,webp', 'extensions:jpeg,jpg,png,webp', 'max:5120'],
             'status' => ['sometimes', 'in:lost,found,claimed'],
             'place' => ['required', 'string', 'max:255'],
         ]);
@@ -102,7 +102,7 @@ class LostFoundItemController extends Controller
             'item_name' => ['sometimes', 'string', 'max:150'],
             'category' => ['sometimes', 'string', 'max:100'],
             'description' => ['sometimes', 'string'],
-            'image' => ['sometimes', 'nullable', 'image', 'mimes:jpeg,jpg,png,webp', 'max:5120'],
+            'image' => ['sometimes', 'nullable', 'image', 'mimes:jpeg,jpg,png,webp', 'extensions:jpeg,jpg,png,webp', 'max:5120'],
             'status' => ['sometimes', 'in:lost,found,claimed'],
             'place' => ['sometimes', 'string', 'max:255'],
             'reviewed_by' => ['sometimes', 'nullable', 'integer', 'exists:admins,admin_id'],
