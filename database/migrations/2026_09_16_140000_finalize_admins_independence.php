@@ -37,6 +37,8 @@ return new class extends Migration
             DB::statement('ALTER TABLE admins MODIFY admin_id BIGINT UNSIGNED AUTO_INCREMENT');
         }
 
+        $this->ensureAdminIdentityColumns();
+
         if (! $this->columnHasUniqueIndex('admins', 'email')) {
             Schema::table('admins', function (Blueprint $table): void {
                 $table->unique('email');
@@ -122,5 +124,34 @@ return new class extends Migration
         $indexes = DB::select("SHOW INDEXES FROM {$table} WHERE Column_name = ?", [$column]);
 
         return collect($indexes)->contains(fn (object $index): bool => (int) $index->Non_unique === 0);
+    }
+
+    private function ensureAdminIdentityColumns(): void
+    {
+        if (! Schema::hasColumn('admins', 'name')) {
+            Schema::table('admins', function (Blueprint $table): void {
+                $table->string('name')->nullable()->after('admin_id');
+            });
+        }
+
+        if (! Schema::hasColumn('admins', 'email')) {
+            Schema::table('admins', function (Blueprint $table): void {
+                $table->string('email')->nullable()->after('name');
+            });
+        }
+
+        DB::statement(
+            <<<'SQL'
+            UPDATE admins
+            LEFT JOIN users ON users.id = admins.admin_id
+            SET admins.name = COALESCE(admins.name, users.name, CONCAT('Administrator ', admins.admin_id)),
+                admins.email = COALESCE(admins.email, users.email, CONCAT('admin-', admins.admin_id, '@example.invalid'))
+            WHERE admins.name IS NULL
+               OR admins.email IS NULL
+            SQL,
+        );
+
+        DB::statement('ALTER TABLE admins MODIFY name VARCHAR(255) NOT NULL');
+        DB::statement('ALTER TABLE admins MODIFY email VARCHAR(255) NOT NULL');
     }
 };

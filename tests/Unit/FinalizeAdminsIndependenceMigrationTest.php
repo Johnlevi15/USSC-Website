@@ -14,11 +14,17 @@ class FinalizeAdminsIndependenceMigrationTest extends TestCase
 
         $legacyConstraintPosition = strpos($migration, "'admins' => 'admins_admin_id_foreign'");
         $alterPosition = strpos($migration, 'ALTER TABLE admins MODIFY admin_id BIGINT UNSIGNED AUTO_INCREMENT');
+        $identityColumnsPosition = strpos($migration, '$this->ensureAdminIdentityColumns();');
+        $uniqueEmailPosition = strpos($migration, "\$table->unique('email')");
 
         $this->assertIsInt($legacyConstraintPosition);
         $this->assertIsInt($alterPosition);
+        $this->assertIsInt($identityColumnsPosition);
+        $this->assertIsInt($uniqueEmailPosition);
         $this->assertLessThan($alterPosition, $legacyConstraintPosition);
+        $this->assertLessThan($uniqueEmailPosition, $identityColumnsPosition);
         $this->assertStringContainsString('$table->dropForeign($constraint)', $migration);
         $this->assertStringNotContainsString('$table->dropForeign([$constraint])', $migration);
+        $this->assertStringContainsString('LEFT JOIN users ON users.id = admins.admin_id', $migration);
     }
 }
