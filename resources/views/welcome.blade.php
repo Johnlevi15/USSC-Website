@@ -1,6 +1,64 @@
 @extends('layouts.ussc')
 @section('title', 'CLSU USSC Portal')
 @section('content')
+<div
+    id="welcome-privacy-modal"
+    class="fixed inset-0 z-[100] hidden items-center justify-center bg-black/60 p-4"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="welcome-privacy-title"
+>
+    <div class="w-full max-w-2xl overflow-hidden rounded-2xl bg-white shadow-2xl">
+        <div class="bg-red-900 px-6 py-4 text-white">
+            <div class="flex items-center gap-3">
+                <div class="flex h-10 w-10 items-center justify-center rounded-full bg-yellow-400 text-red-900">
+                    <i class="fa-solid fa-shield-halved"></i>
+                </div>
+                <div>
+                    <h2 id="welcome-privacy-title" class="text-lg font-bold">Data Privacy Notice</h2>
+                    <p class="text-xs text-red-100">CLSU USSC Portal</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="max-h-[70vh] overflow-y-auto p-6">
+            <p class="mb-4 text-sm leading-6 text-gray-700">
+                The Central Luzon State University - University Supreme Student Council (CLSU-USSC)
+                respects and protects the privacy of students and visitors who use this portal.
+            </p>
+
+            <p class="mb-4 text-sm leading-6 text-gray-700">
+                This website may collect personal information only when you submit a document request,
+                report a lost or found item, track a request, or contact the council through the portal.
+                Information may include your name, email address, student details, uploaded files, request
+                details, and other information needed to provide the selected service.
+            </p>
+
+            <p class="mb-4 text-sm leading-6 text-gray-700">
+                Any information you provide will be used only for receiving, verifying, processing,
+                tracking, and responding to your requests or concerns. Access should be limited to
+                authorized personnel responsible for handling the relevant service.
+            </p>
+
+            <p class="text-sm leading-6 text-gray-700">
+                By continuing to use this portal, you acknowledge that your information may be collected
+                and processed in accordance with Republic Act No. 10173, also known as the
+                <strong>Data Privacy Act of 2012</strong>, and applicable university policies.
+            </p>
+        </div>
+
+        <div class="flex flex-col-reverse gap-2 border-t bg-gray-50 px-6 py-4 sm:flex-row sm:justify-end">
+            <button
+                id="welcome-privacy-continue"
+                type="button"
+                class="rounded-lg bg-red-900 px-6 py-2.5 text-sm font-bold text-white transition hover:bg-red-800"
+            >
+                I Understand
+            </button>
+        </div>
+    </div>
+</div>
+
 <div class="max-w-6xl w-full mx-auto p-4 md:p-6 space-y-6">
     <section class="bg-white rounded-xl shadow-sm border p-8 text-center">
         <img src="{{ asset('logo.png') }}" alt="USSC Logo" class="w-24 h-24 object-contain mx-auto mb-3" onerror="this.src='https://via.placeholder.com/96'">
@@ -103,4 +161,25 @@
         </div>
     </section>
 </div>
+
+@push('scripts')
+<script>
+    const welcomePrivacyStorageKey = 'ussc_welcome_privacy_accepted_v1';
+    const welcomePrivacyModal = document.getElementById('welcome-privacy-modal');
+    const welcomePrivacyContinue = document.getElementById('welcome-privacy-continue');
+
+    welcomePrivacyContinue.addEventListener('click', function () {
+        localStorage.setItem(welcomePrivacyStorageKey, 'accepted');
+        welcomePrivacyModal.classList.add('hidden');
+        welcomePrivacyModal.classList.remove('flex');
+    });
+
+    document.addEventListener('DOMContentLoaded', function () {
+        if (localStorage.getItem(welcomePrivacyStorageKey) !== 'accepted') {
+            welcomePrivacyModal.classList.remove('hidden');
+            welcomePrivacyModal.classList.add('flex');
+        }
+    });
+</script>
+@endpush
 @endsection
