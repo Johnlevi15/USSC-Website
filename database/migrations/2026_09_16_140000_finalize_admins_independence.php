@@ -9,8 +9,18 @@ return new class extends Migration
 {
     public function up(): void
     {
-        // Step 1: Temporarily drop foreign key constraints that reference admin_id
+        if (! Schema::hasColumn('admins', 'remember_token')) {
+            Schema::table('admins', function (Blueprint $table): void {
+                $table->rememberToken()->after('password_hash');
+            });
+        }
+
+        if (DB::connection()->getDriverName() !== 'mysql') {
+            return;
+        }
+
         $foreignKeys = [
+            'admins' => 'admins_admin_id_foreign',
             'document_requests' => 'document_requests_reviewed_by_foreign',
             'events' => 'events_created_by_foreign',
             'event_calendar' => 'event_calendar_admin_id_foreign',
@@ -20,59 +30,19 @@ return new class extends Migration
         ];
 
         foreach ($foreignKeys as $table => $constraint) {
-            if (Schema::hasTable($table)) {
-                try {
-                    Schema::table($table, function (Blueprint $table) use ($constraint): void {
-                        $table->dropForeign([$constraint]);
-                    });
-                } catch (Exception $e) {
-                    // Foreign key might not exist or have different name
-                    // Try to drop by column name instead
-                    $columnMap = [
-                        'document_requests_reviewed_by_foreign' => 'reviewed_by',
-                        'events_created_by_foreign' => 'created_by',
-                        'event_calendar_admin_id_foreign' => 'admin_id',
-                        'lost_found_items_reviewed_by_foreign' => 'reviewed_by',
-                        'email_notifications_sent_by_foreign' => 'sent_by',
-                        'admin_activity_logs_admin_id_foreign' => 'admin_id',
-                    ];
-
-                    if (isset($columnMap[$constraint])) {
-                        try {
-                            Schema::table($table, function (Blueprint $table) use ($columnMap, $constraint): void {
-                                $table->dropForeign([$columnMap[$constraint]]);
-                            });
-                        } catch (Exception $e2) {
-                            // Continue if foreign key doesn't exist
-                        }
-                    }
-                }
-            }
+            $this->dropForeignKeyIfExists($table, $constraint);
         }
 
-        // Step 2: Add remember_token if it doesn't exist
-        if (! Schema::hasColumn('admins', 'remember_token')) {
+        if (! $this->columnIsAutoIncrement('admins', 'admin_id')) {
+            DB::statement('ALTER TABLE admins MODIFY admin_id BIGINT UNSIGNED AUTO_INCREMENT');
+        }
+
+        if (! $this->columnHasUniqueIndex('admins', 'email')) {
             Schema::table('admins', function (Blueprint $table): void {
-                $table->rememberToken()->after('password_hash');
+                $table->unique('email');
             });
         }
 
-        $isMysql = DB::connection()->getDriverName() === 'mysql';
-
-        if ($isMysql) {
-            // Step 3: Make admin_id auto-increment
-            DB::statement('ALTER TABLE admins MODIFY admin_id BIGINT UNSIGNED AUTO_INCREMENT');
-
-            // Step 4: Add unique constraint to email if it doesn't exist
-            $indexes = DB::select("SHOW INDEXES FROM admins WHERE Column_name = 'email'");
-            if (empty($indexes)) {
-                Schema::table('admins', function (Blueprint $table): void {
-                    $table->unique('email');
-                });
-            }
-        }
-
-        // Step 5: Re-add foreign key constraints (now referencing the independent admins table)
         $tables = [
             'document_requests' => ['reviewed_by', 'admin_id', 'nullOnDelete'],
             'events' => ['created_by', 'admin_id', 'restrictOnDelete'],
@@ -83,8 +53,14 @@ return new class extends Migration
         ];
 
         foreach ($tables as $table => $config) {
-            if (Schema::hasTable($table)) {
-                [$column, $references, $onDelete] = $config;
+            [$column, $references, $onDelete] = $config;
+            $constraint = "{$table}_{$column}_foreign";
+
+            if (
+                Schema::hasTable($table)
+                && Schema::hasColumn($table, $column)
+                && ! $this->foreignKeyExists($table, $constraint)
+            ) {
                 Schema::table($table, function (Blueprint $table) use ($column, $references, $onDelete): void {
                     $table->foreign($column)->references($references)->on('admins')->$onDelete();
                 });
@@ -95,5 +71,56 @@ return new class extends Migration
     public function down(): void
     {
         throw new LogicException('This migration cannot be safely reversed. Admins are now independent entities.');
+    }
+
+    private function dropForeignKeyIfExists(string $table, string $constraint): void
+    {
+        if (! Schema::hasTable($table) || ! $this->foreignKeyExists($table, $constraint)) {
+            return;
+        }
+
+        Schema::table($table, function (Blueprint $table) use ($constraint): void {
+            $table->dropForeign($constraint);
+        });
+    }
+
+    private function foreignKeyExists(string $table, string $constraint): bool
+    {
+        $result = DB::selectOne(
+            <<<'SQL'
+            SELECT COUNT(*) AS aggregate
+            FROM information_schema.TABLE_CONSTRAINTS
+            WHERE CONSTRAINT_SCHEMA = DATABASE()
+              AND TABLE_NAME = ?
+              AND CONSTRAINT_NAME = ?
+              AND CONSTRAINT_TYPE = 'FOREIGN KEY'
+            SQL,
+            [$table, $constraint],
+        );
+
+        return ((int) $result->aggregate) > 0;
+    }
+
+    private function columnIsAutoIncrement(string $table, string $column): bool
+    {
+        $result = DB::selectOne(
+            <<<'SQL'
+            SELECT EXTRA
+            FROM information_schema.COLUMNS
+            WHERE TABLE_SCHEMA = DATABASE()
+              AND TABLE_NAME = ?
+              AND COLUMN_NAME = ?
+            SQL,
+            [$table, $column],
+        );
+
+        return str_contains(strtolower((string) $result?->EXTRA), 'auto_increment');
+    }
+
+    private function columnHasUniqueIndex(string $table, string $column): bool
+    {
+        $indexes = DB::select("SHOW INDEXES FROM {$table} WHERE Column_name = ?", [$column]);
+
+        return collect($indexes)->contains(fn (object $index): bool => (int) $index->Non_unique === 0);
     }
 };

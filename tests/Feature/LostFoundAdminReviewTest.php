@@ -30,6 +30,7 @@ class LostFoundAdminReviewTest extends TestCase
             'item_name' => 'Blue Umbrella',
             'category' => 'Personal Item',
             'description' => 'Found near the student center lobby.',
+            'image_path' => 'lost-found/blue-umbrella.jpg',
             'status' => 'found',
             'approval_status' => 'pending',
             'submitted_at' => now(),
@@ -46,6 +47,7 @@ class LostFoundAdminReviewTest extends TestCase
             ->assertSeeText('Found near the student center lobby.')
             ->assertSeeText('Taylor Student')
             ->assertSeeText('taylor@example.test')
+            ->assertSee('src="/storage/lost-found/blue-umbrella.jpg"', false)
             ->assertSeeText('Approval Status')
             ->assertSeeText('Item Status');
     }

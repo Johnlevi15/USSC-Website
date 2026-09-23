@@ -20,6 +20,15 @@ class LostFoundItem extends Model
         return ['submitted_at' => 'datetime'];
     }
 
+    public function imageUrl(): ?string
+    {
+        if (! $this->image_path) {
+            return null;
+        }
+
+        return '/storage/'.ltrim($this->image_path, '/');
+    }
+
     public function poster(): BelongsTo
     {
         return $this->belongsTo(User::class, 'posted_by');

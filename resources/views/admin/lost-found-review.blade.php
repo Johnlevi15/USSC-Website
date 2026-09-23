@@ -93,11 +93,11 @@
                     <p class="mt-2 whitespace-pre-line break-words text-sm text-gray-900">{{ $item->description }}</p>
                 </div>
 
-                @if($item->image_path)
+                @if($item->imageUrl())
                     <div>
                         <p class="text-xs font-bold uppercase tracking-wide text-gray-500">Submitted Image</p>
-                        <a href="{{ Storage::disk('public')->url($item->image_path) }}" target="_blank" rel="noopener" class="mt-2 block overflow-hidden rounded-lg border border-gray-200 bg-gray-50">
-                            <img src="{{ Storage::disk('public')->url($item->image_path) }}" alt="{{ $item->item_name }}" class="max-h-96 w-full object-contain">
+                        <a href="{{ $item->imageUrl() }}" target="_blank" rel="noopener" class="mt-2 block overflow-hidden rounded-lg border border-gray-200 bg-gray-50">
+                            <img src="{{ $item->imageUrl() }}" alt="{{ $item->item_name }}" class="max-h-96 w-full object-contain">
                         </a>
                     </div>
                 @else

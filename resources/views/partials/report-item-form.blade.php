@@ -92,7 +92,7 @@
                 ? 'px-3 py-2 rounded-md bg-yellow-600 text-white text-xs font-bold'
                 : 'px-3 py-2 rounded-md text-gray-600 text-xs font-bold';
             document.getElementById('place-label').textContent = lost
-                ? 'Location (Where Lost)'
+                ? 'Place Lost'
                 : 'Place Found';
             document.getElementById('submit').textContent = lost
                 ? 'SUBMIT LOST ITEM REPORT'

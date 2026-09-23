@@ -2,6 +2,8 @@
 
 namespace Tests\Feature;
 
+use App\Models\LostFoundItem;
+use App\Models\User;
 use Illuminate\Foundation\Testing\LazilyRefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
@@ -32,5 +34,32 @@ class LostFoundItemFormTest extends TestCase
             'item_name' => 'Blue Umbrella',
         ]);
         Storage::disk('public')->assertDirectoryEmpty('/');
+    }
+
+    public function test_lost_found_gallery_uses_same_origin_storage_image_urls(): void
+    {
+        config(['app.url' => 'https://ussc.test']);
+
+        $user = User::create([
+            'name' => 'Taylor Student',
+            'email' => 'taylor@example.test',
+        ]);
+
+        LostFoundItem::create([
+            'posted_by' => $user->id,
+            'item_name' => 'Blue Umbrella',
+            'category' => 'Accessories',
+            'description' => 'Found near the main lobby.',
+            'image_path' => 'lost-found/blue-umbrella.jpg',
+            'status' => 'found',
+            'approval_status' => 'approved',
+            'submitted_at' => now(),
+            'place' => 'Main Lobby',
+        ]);
+
+        $this->get(route('lost-found'))
+            ->assertOk()
+            ->assertSee('src="/storage/lost-found/blue-umbrella.jpg"', false)
+            ->assertDontSee('https://ussc.test/storage/lost-found/blue-umbrella.jpg', false);
     }
 }

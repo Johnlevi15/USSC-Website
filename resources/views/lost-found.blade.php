@@ -39,9 +39,9 @@
     <div id="gallery" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
         @foreach($items as $item)
             <article class="item bg-white rounded-xl shadow-sm border p-4" data-status="{{ strtoupper($item->status) }}" data-text="{{ strtolower($item->item_name.' '.$item->category.' '.$item->description.' '.$item->place.' '.($item->poster?->name ?? '')) }}">
-                @if($item->image_path)
-                    <a href="{{ Storage::disk('public')->url($item->image_path) }}" target="_blank" rel="noopener" aria-label="View full image of {{ $item->item_name }}" class="block">
-                        <img src="{{ Storage::disk('public')->url($item->image_path) }}" alt="{{ $item->item_name }}" class="mx-auto mb-3 aspect-square h-32 w-32 cursor-zoom-in rounded-lg object-cover">
+                @if($item->imageUrl())
+                    <a href="{{ $item->imageUrl() }}" target="_blank" rel="noopener" aria-label="View full image of {{ $item->item_name }}" class="block">
+                        <img src="{{ $item->imageUrl() }}" alt="{{ $item->item_name }}" class="mx-auto mb-3 aspect-square h-32 w-32 cursor-zoom-in rounded-lg object-cover">
                     </a>
                 @endif
                 <span @class([
