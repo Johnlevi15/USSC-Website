@@ -23,15 +23,53 @@
                 <a href="{{ route('admin.dashboard') }}" class="px-3 py-2 hover:text-yellow-300"><i class="fa-solid fa-gauge-high text-xs"></i> Admin Dashboard</a>
             @endif
         </nav>
-        <select class="md:hidden bg-red-950 border border-red-700 rounded px-2 py-1 text-xs" onchange="location.href=this.value" aria-label="Navigate">
-            <option selected disabled>Menu</option>
-            <option value="{{ route('home') }}">Home</option><option value="{{ route('lost-found') }}">Lost & Found</option><option value="{{ route('document-request') }}">Request Document</option><option value="{{ route('track-request') }}">Track Request</option>
-            @if(auth('admin')->check())
-                <option value="{{ route('admin.dashboard') }}">Admin Dashboard</option>
-            @endif
-        </select>
+        <button
+            id="mobile-menu-open"
+            type="button"
+            class="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-red-700 bg-red-950 text-white transition hover:bg-red-800 focus:outline-none focus:ring-2 focus:ring-yellow-400 md:hidden"
+            aria-controls="mobile-menu-panel"
+            aria-expanded="false"
+            aria-label="Open navigation menu"
+        >
+            <i class="fa-solid fa-bars"></i>
+        </button>
     </div>
 </header>
+<div id="mobile-menu-overlay" class="fixed inset-0 z-[60] hidden bg-black/60 md:hidden" aria-hidden="true"></div>
+<aside
+    id="mobile-menu-panel"
+    class="fixed inset-y-0 right-0 z-[70] flex w-80 max-w-[85vw] translate-x-full flex-col bg-white text-gray-900 shadow-2xl transition-transform duration-300 ease-out md:hidden"
+    aria-labelledby="mobile-menu-title"
+    aria-hidden="true"
+>
+    <div class="flex items-center justify-between border-b border-gray-200 bg-red-900 px-4 py-3 text-white">
+        <div class="flex items-center gap-3">
+            <img src="{{ asset('logo1.png') }}" alt="USSC Logo" class="h-10 w-10" onerror="this.src='https://via.placeholder.com/40'">
+            <div>
+                <h2 id="mobile-menu-title" class="text-sm font-extrabold leading-none tracking-wide">USSC PORTAL</h2>
+                <p class="text-xs text-red-100">Navigation</p>
+            </div>
+        </div>
+        <button
+            id="mobile-menu-close"
+            type="button"
+            class="inline-flex h-9 w-9 items-center justify-center rounded-lg text-white transition hover:bg-red-800 focus:outline-none focus:ring-2 focus:ring-yellow-400"
+            aria-label="Close navigation menu"
+        >
+            <i class="fa-solid fa-xmark"></i>
+        </button>
+    </div>
+
+    <nav class="flex flex-1 flex-col gap-2 overflow-y-auto p-4 text-sm font-semibold">
+        <a href="{{ route('home') }}" class="flex items-center gap-3 rounded-lg px-4 py-3 {{ request()->routeIs('home') ? 'bg-red-900 text-white' : 'text-gray-700 hover:bg-red-50 hover:text-red-900' }}"><i class="fa-solid fa-house w-5 text-center text-xs"></i> Home</a>
+        <a href="{{ route('lost-found') }}" class="flex items-center gap-3 rounded-lg px-4 py-3 {{ request()->routeIs('lost-found') ? 'bg-red-900 text-white' : 'text-gray-700 hover:bg-red-50 hover:text-red-900' }}"><i class="fa-solid fa-box-archive w-5 text-center text-xs"></i> Lost & Found</a>
+        <a href="{{ route('document-request') }}" class="flex items-center gap-3 rounded-lg px-4 py-3 {{ request()->routeIs('document-request') ? 'bg-red-900 text-white' : 'text-gray-700 hover:bg-red-50 hover:text-red-900' }}"><i class="fa-solid fa-file-lines w-5 text-center text-xs"></i> Request Document</a>
+        <a href="{{ route('track-request') }}" class="flex items-center gap-3 rounded-lg px-4 py-3 {{ request()->routeIs('track-request') ? 'bg-red-900 text-white' : 'text-gray-700 hover:bg-red-50 hover:text-red-900' }}"><i class="fa-solid fa-route w-5 text-center text-xs"></i> Track Request</a>
+        @if(auth('admin')->check())
+            <a href="{{ route('admin.dashboard') }}" class="flex items-center gap-3 rounded-lg px-4 py-3 text-gray-700 hover:bg-red-50 hover:text-red-900"><i class="fa-solid fa-gauge-high w-5 text-center text-xs"></i> Admin Dashboard</a>
+        @endif
+    </nav>
+</aside>
 <main class="flex-grow">@yield('content')</main>
 <footer class="mt-12 overflow-hidden border-t-4 border-yellow-500 bg-neutral-900 text-white" style="background-color: #171717;">
     <div class="mx-auto grid max-w-7xl grid-cols-1 gap-8 px-6 py-10 text-sm md:grid-cols-2 lg:grid-cols-4">
@@ -123,6 +161,39 @@
     </div>
 </div>
 <script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const mobileMenuOpen = document.getElementById('mobile-menu-open');
+        const mobileMenuClose = document.getElementById('mobile-menu-close');
+        const mobileMenuOverlay = document.getElementById('mobile-menu-overlay');
+        const mobileMenuPanel = document.getElementById('mobile-menu-panel');
+
+        function openMobileMenu() {
+            mobileMenuOverlay.classList.remove('hidden');
+            mobileMenuPanel.classList.remove('translate-x-full');
+            mobileMenuOpen.setAttribute('aria-expanded', 'true');
+            mobileMenuPanel.setAttribute('aria-hidden', 'false');
+            document.body.classList.add('overflow-hidden');
+        }
+
+        function closeMobileMenu() {
+            mobileMenuOverlay.classList.add('hidden');
+            mobileMenuPanel.classList.add('translate-x-full');
+            mobileMenuOpen.setAttribute('aria-expanded', 'false');
+            mobileMenuPanel.setAttribute('aria-hidden', 'true');
+            document.body.classList.remove('overflow-hidden');
+        }
+
+        mobileMenuOpen.addEventListener('click', openMobileMenu);
+        mobileMenuClose.addEventListener('click', closeMobileMenu);
+        mobileMenuOverlay.addEventListener('click', closeMobileMenu);
+
+        document.addEventListener('keydown', function (event) {
+            if (event.key === 'Escape' && mobileMenuPanel.getAttribute('aria-hidden') === 'false') {
+                closeMobileMenu();
+            }
+        });
+    });
+
     function showPortalModal(title, message, actionLabel = '', actionUrl = '') {
         const modal = document.getElementById('portal-modal');
         const action = document.getElementById('portal-modal-action');

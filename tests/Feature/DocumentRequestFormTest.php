@@ -30,6 +30,14 @@ class DocumentRequestFormTest extends TestCase
             ->assertSee('Document Fee Request Form');
     }
 
+    public function test_document_request_form_does_not_show_the_data_privacy_popup(): void
+    {
+        $this->get('/document-request')
+            ->assertOk()
+            ->assertDontSee('Data Privacy Notice')
+            ->assertDontSee('privacy-modal');
+    }
+
     public function test_document_request_form_rejects_an_unavailable_document_type(): void
     {
         $this->from('/document-request')->post('/document-request', [
