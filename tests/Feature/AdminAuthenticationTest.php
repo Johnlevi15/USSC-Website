@@ -35,6 +35,22 @@ class AdminAuthenticationTest extends TestCase
         ]);
     }
 
+    public function test_admin_can_log_in_with_a_differently_cased_email(): void
+    {
+        $admin = Admin::create([
+            'name' => 'Portal Administrator',
+            'email' => 'admin@example.test',
+            'password_hash' => Hash::make('secure-password'),
+        ]);
+
+        $this->post(route('admin-login.store'), [
+            'email' => 'Admin@Example.test',
+            'password' => 'secure-password',
+        ])->assertRedirect(route('admin.dashboard'));
+
+        $this->assertAuthenticatedAs($admin, 'admin');
+    }
+
     public function test_admin_dashboard_rejects_a_user_authenticated_with_the_web_guard(): void
     {
         $this->get(route('admin.dashboard'))->assertRedirect();

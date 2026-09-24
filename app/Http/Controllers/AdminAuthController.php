@@ -32,6 +32,7 @@ class AdminAuthController extends Controller
             'email' => ['required', 'email'],
             'password' => ['required', 'string'],
         ]);
+        $credentials['email'] = Str::lower($credentials['email']);
 
         $admin = Admin::where('email', $credentials['email'])->first();
 
