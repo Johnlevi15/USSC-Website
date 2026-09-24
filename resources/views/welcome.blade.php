@@ -40,18 +40,32 @@
                 authorized personnel responsible for handling the relevant service.
             </p>
 
-            <p class="text-sm leading-6 text-gray-700">
+            <p class="mb-5 text-sm leading-6 text-gray-700">
                 By continuing to use this portal, you acknowledge that your information may be collected
                 and processed in accordance with Republic Act No. 10173, also known as the
                 <strong>Data Privacy Act of 2012</strong>, and applicable university policies.
             </p>
+
+            <label class="flex cursor-pointer items-start gap-3 border-t pt-5">
+                <input
+                    id="welcome-privacy-agree"
+                    type="checkbox"
+                    class="mt-1 h-4 w-4 accent-red-900"
+                >
+                <span class="text-sm leading-6 text-gray-700">
+                    <strong>I Agree and Understand.</strong>
+                    I have read and understood the Data Privacy Notice and agree to the collection
+                    and processing of the information necessary to use this portal.
+                </span>
+            </label>
         </div>
 
         <div class="flex flex-col-reverse gap-2 border-t bg-gray-50 px-6 py-4 sm:flex-row sm:justify-end">
             <button
                 id="welcome-privacy-continue"
                 type="button"
-                class="rounded-lg bg-red-900 px-6 py-2.5 text-sm font-bold text-white transition hover:bg-red-800"
+                disabled
+                class="rounded-lg bg-red-900 px-6 py-2.5 text-sm font-bold text-white transition hover:bg-red-800 disabled:cursor-not-allowed disabled:bg-gray-400"
             >
                 I Understand
             </button>
@@ -166,9 +180,18 @@
 <script>
     const welcomePrivacyStorageKey = 'ussc_welcome_privacy_accepted_v1';
     const welcomePrivacyModal = document.getElementById('welcome-privacy-modal');
+    const welcomePrivacyAgree = document.getElementById('welcome-privacy-agree');
     const welcomePrivacyContinue = document.getElementById('welcome-privacy-continue');
 
+    welcomePrivacyAgree.addEventListener('change', function () {
+        welcomePrivacyContinue.disabled = !welcomePrivacyAgree.checked;
+    });
+
     welcomePrivacyContinue.addEventListener('click', function () {
+        if (!welcomePrivacyAgree.checked) {
+            return;
+        }
+
         localStorage.setItem(welcomePrivacyStorageKey, 'accepted');
         welcomePrivacyModal.classList.add('hidden');
         welcomePrivacyModal.classList.remove('flex');

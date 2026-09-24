@@ -17,6 +17,8 @@ class ExampleTest extends TestCase
         $response
             ->assertStatus(200)
             ->assertSee('Data Privacy Notice')
+            ->assertSee('id="welcome-privacy-agree"', false)
+            ->assertSee('disabled', false)
             ->assertSee('I Understand');
     }
 }
