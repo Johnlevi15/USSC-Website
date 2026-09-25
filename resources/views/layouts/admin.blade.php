@@ -30,10 +30,17 @@
         </a>
         <div class="flex items-center gap-2">
             <span class="hidden max-w-48 truncate text-xs text-gray-300 sm:inline">{{ auth('admin')->user()->name }}</span>
+            <div class="hidden items-center gap-3 text-xs md:flex">
+                <a href="{{ route('home') }}" class="rounded-lg border border-red-700 px-3 py-1.5 hover:bg-red-900">View portal</a>
+                <form method="POST" action="{{ route('admin-logout') }}">
+                    @csrf
+                    <button class="rounded-lg border border-red-700 px-3 py-1.5 hover:bg-red-900">Logout</button>
+                </form>
+            </div>
             <button
                 id="admin-menu-toggle"
                 type="button"
-                class="inline-flex h-10 items-center justify-center gap-2 rounded-lg border border-red-800 bg-red-900 px-3 text-xs font-bold text-white transition hover:bg-red-800 focus:outline-none focus:ring-2 focus:ring-yellow-400"
+                class="inline-flex h-10 items-center justify-center gap-2 rounded-lg border border-red-800 bg-red-900 px-3 text-xs font-bold text-white transition hover:bg-red-800 focus:outline-none focus:ring-2 focus:ring-yellow-400 md:hidden"
                 aria-controls="admin-menu-panel"
                 aria-expanded="false"
                 aria-label="Open admin navigation menu"
@@ -43,12 +50,25 @@
             </button>
         </div>
     </div>
+    <nav class="hidden border-t border-red-900 bg-red-900 md:block">
+        <div class="mx-auto flex max-w-7xl gap-1 overflow-x-auto px-4 text-xs font-semibold">
+            @foreach($adminNavigationItems as $item)
+                <a href="{{ route($item['route']) }}" @class([
+                    'whitespace-nowrap px-4 py-2.5',
+                    'border-b-2 border-yellow-400 text-yellow-400' => request()->routeIs($item['active']),
+                    'text-gray-200 hover:text-white' => ! request()->routeIs($item['active']),
+                ])>
+                    <i class="fa-solid {{ $item['icon'] }} mr-1"></i>{{ $item['label'] }}
+                </a>
+            @endforeach
+        </div>
+    </nav>
 </header>
 
-<div id="admin-menu-overlay" class="fixed inset-0 z-50 hidden bg-black/60" aria-hidden="true"></div>
+<div id="admin-menu-overlay" class="fixed inset-0 z-50 hidden bg-black/60 md:hidden" aria-hidden="true"></div>
 <aside
     id="admin-menu-panel"
-    class="fixed inset-y-0 right-0 z-[60] flex w-80 max-w-[88vw] translate-x-full flex-col bg-white text-gray-900 shadow-2xl transition-transform duration-300 ease-out"
+    class="fixed inset-y-0 right-0 z-[60] flex w-80 max-w-[88vw] translate-x-full flex-col bg-white text-gray-900 shadow-2xl transition-transform duration-300 ease-out md:hidden"
     aria-labelledby="admin-menu-title"
     aria-hidden="true"
 >

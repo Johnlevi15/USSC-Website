@@ -78,7 +78,7 @@ class AdminAuthenticationTest extends TestCase
         $this->assertStringContainsString('private', $cacheControl);
     }
 
-    public function test_admin_layout_renders_burger_navigation_with_portal_and_logout_actions(): void
+    public function test_admin_layout_renders_desktop_navigation_and_mobile_burger_menu(): void
     {
         $admin = Admin::create([
             'name' => 'Portal Administrator',
@@ -90,8 +90,10 @@ class AdminAuthenticationTest extends TestCase
             ->get(route('admin.dashboard'))
             ->assertOk()
             ->assertSee('id="admin-menu-toggle"', false)
+            ->assertSee('md:hidden', false)
             ->assertSee('aria-controls="admin-menu-panel"', false)
             ->assertSee('id="admin-menu-panel"', false)
+            ->assertSee('hidden border-t border-red-900 bg-red-900 md:block', false)
             ->assertSeeText('Dashboard')
             ->assertSeeText('Document Requests')
             ->assertSeeText('Document Types')
