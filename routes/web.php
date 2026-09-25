@@ -19,6 +19,7 @@ use Illuminate\Support\Facades\Route;
 Route::get('/', [EventController::class, 'calendar'])->name('home');
 
 Route::get('/lost-found', [LostFoundItemController::class, 'browse'])->name('lost-found');
+Route::get('/lost-found-items/{lostFoundItem}/image', [LostFoundItemController::class, 'image'])->name('lost-found-items.image');
 Route::get('/report-item', [LostFoundItemController::class, 'create'])->name('report-item');
 Route::post('/report-item', [LostFoundItemController::class, 'store'])
     ->middleware('throttle:uploads')

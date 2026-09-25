@@ -26,7 +26,7 @@ class LostFoundItem extends Model
             return null;
         }
 
-        return '/storage/'.ltrim($this->image_path, '/');
+        return route('lost-found-items.image', $this, false);
     }
 
     public function poster(): BelongsTo

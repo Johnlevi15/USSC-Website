@@ -15,6 +15,11 @@ return [
 
     'default' => env('FILESYSTEM_DISK', 'local'),
 
+    'uploads' => [
+        'documents' => env('DOCUMENT_UPLOAD_DISK', 'local'),
+        'lost_found' => env('LOST_FOUND_DISK', 'public'),
+    ],
+
     /*
     |--------------------------------------------------------------------------
     | Filesystem Disks

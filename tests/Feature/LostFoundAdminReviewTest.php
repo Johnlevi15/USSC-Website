@@ -6,6 +6,7 @@ use App\Models\Admin;
 use App\Models\LostFoundItem;
 use App\Models\User;
 use Illuminate\Foundation\Testing\LazilyRefreshDatabase;
+use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 class LostFoundAdminReviewTest extends TestCase
@@ -14,6 +15,8 @@ class LostFoundAdminReviewTest extends TestCase
 
     public function test_admin_can_review_lost_found_item_details(): void
     {
+        Storage::fake('public');
+
         $admin = Admin::create([
             'name' => 'Portal Administrator',
             'email' => 'admin@example.test',
@@ -37,6 +40,8 @@ class LostFoundAdminReviewTest extends TestCase
             'place' => 'Student Center',
         ]);
 
+        Storage::disk('public')->put('lost-found/blue-umbrella.jpg', 'umbrella image');
+
         $this->actingAs($admin, 'admin')
             ->get(route('admin.lost-found.review', $item))
             ->assertOk()
@@ -47,8 +52,15 @@ class LostFoundAdminReviewTest extends TestCase
             ->assertSeeText('Found near the student center lobby.')
             ->assertSeeText('Taylor Student')
             ->assertSeeText('taylor@example.test')
-            ->assertSee('src="/storage/lost-found/blue-umbrella.jpg"', false)
+            ->assertSee('src="/lost-found-items/'.$item->item_id.'/image"', false)
             ->assertSeeText('Approval Status')
             ->assertSeeText('Item Status');
+
+        $response = $this->actingAs($admin, 'admin')
+            ->get(route('lost-found-items.image', $item))
+            ->assertOk()
+            ->assertHeader('X-Content-Type-Options', 'nosniff');
+
+        $this->assertStringContainsString('umbrella image', $response->streamedContent());
     }
 }

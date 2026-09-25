@@ -8,7 +8,9 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Illuminate\View\View;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class LostFoundItemController extends Controller
 {
@@ -32,6 +34,26 @@ class LostFoundItemController extends Controller
         return response()->json(LostFoundItem::with(['poster', 'reviewer'])->get());
     }
 
+    public function image(Request $request, LostFoundItem $lostFoundItem): StreamedResponse
+    {
+        abort_unless($lostFoundItem->approval_status === 'approved' || $request->user('admin'), 404);
+
+        $path = (string) $lostFoundItem->image_path;
+        abort_unless(Str::startsWith($path, 'lost-found/'), 404);
+        abort_unless(Storage::disk($this->lostFoundDisk())->exists($path), 404);
+
+        $extension = pathinfo($path, PATHINFO_EXTENSION);
+        $filename = Str::slug($lostFoundItem->item_name).($extension ? ".{$extension}" : '');
+
+        return Storage::disk($this->lostFoundDisk())->response($path, $filename, [
+            'Cache-Control' => 'no-store, private',
+            'Content-Disposition' => 'inline; filename="'.$filename.'"',
+            'Pragma' => 'no-cache',
+            'X-Content-Type-Options' => 'nosniff',
+            'X-Robots-Tag' => 'noindex, nofollow, noarchive',
+        ]);
+    }
+
     public function store(Request $request): JsonResponse|RedirectResponse
     {
         if (! $request->expectsJson()) {
@@ -53,7 +75,7 @@ class LostFoundItemController extends Controller
                 ],
             );
 
-            $imagePath = $request->file('image')?->store('lost-found', 'public');
+            $imagePath = $request->file('image')?->store('lost-found', $this->lostFoundDisk());
 
             LostFoundItem::create([
                 'posted_by' => $user->id,
@@ -82,7 +104,7 @@ class LostFoundItemController extends Controller
 
         $item = LostFoundItem::create([
             ...$validated,
-            'image_path' => $request->file('image')?->store('lost-found', 'public'),
+            'image_path' => $request->file('image')?->store('lost-found', $this->lostFoundDisk()),
             'status' => $validated['status'] ?? 'pending',
             'approval_status' => 'pending',
             'submitted_at' => now(),
@@ -123,10 +145,10 @@ class LostFoundItemController extends Controller
 
         if ($request->hasFile('image')) {
             if ($lostFoundItem->image_path) {
-                Storage::disk('public')->delete($lostFoundItem->image_path);
+                Storage::disk($this->lostFoundDisk())->delete($lostFoundItem->image_path);
             }
 
-            $validated['image_path'] = $request->file('image')->store('lost-found', 'public');
+            $validated['image_path'] = $request->file('image')->store('lost-found', $this->lostFoundDisk());
         }
 
         // Persist the validated changes before returning the refreshed model.
@@ -140,9 +162,14 @@ class LostFoundItemController extends Controller
         $lostFoundItem->delete();
 
         if ($lostFoundItem->image_path) {
-            Storage::disk('public')->delete($lostFoundItem->image_path);
+            Storage::disk($this->lostFoundDisk())->delete($lostFoundItem->image_path);
         }
 
         return response()->json(null, 204);
+    }
+
+    private function lostFoundDisk(): string
+    {
+        return (string) config('filesystems.uploads.lost_found', 'public');
     }
 }

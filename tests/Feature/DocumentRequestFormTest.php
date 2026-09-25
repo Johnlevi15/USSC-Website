@@ -547,9 +547,9 @@ class DocumentRequestFormTest extends TestCase
         Storage::disk('local')->assertExists($storedPath);
     }
 
-    public function test_document_request_file_uploads_use_the_protected_local_disk_even_when_default_disk_changes(): void
+    public function test_document_request_file_uploads_use_the_configured_document_upload_disk(): void
     {
-        config(['filesystems.default' => 'public']);
+        config(['filesystems.uploads.documents' => 'public']);
         Storage::fake('local');
         Storage::fake('public');
 
@@ -579,8 +579,8 @@ class DocumentRequestFormTest extends TestCase
             ->where('field_name', 'student_photo')
             ->value('field_value');
 
-        Storage::disk('local')->assertExists($storedPath);
-        Storage::disk('public')->assertMissing($storedPath);
+        Storage::disk('public')->assertExists($storedPath);
+        Storage::disk('local')->assertMissing($storedPath);
     }
 
     public function test_document_request_form_rejects_uploaded_file_with_disallowed_extension(): void

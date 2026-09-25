@@ -78,7 +78,8 @@ class DocumentTypeController extends Controller
             $documentType->documentRequests()
                 ->select('request_id')
                 ->each(function ($documentRequest): void {
-                    Storage::disk('local')->deleteDirectory("document-uploads/{$documentRequest->request_id}");
+                    Storage::disk(config('filesystems.uploads.documents', 'local'))
+                        ->deleteDirectory("document-uploads/{$documentRequest->request_id}");
                     $documentRequest->delete();
                 });
 

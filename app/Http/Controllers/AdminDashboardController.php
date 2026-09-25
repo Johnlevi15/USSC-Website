@@ -77,7 +77,7 @@ class AdminDashboardController extends Controller
 
         $path = (string) $field->field_value;
         abort_unless(Str::startsWith($path, "document-uploads/{$documentRequest->request_id}/"), 404);
-        $disk = Storage::disk('local')->exists($path) ? 'local' : 'public';
+        $disk = $this->existingDocumentUploadDisk($path);
         abort_unless(Storage::disk($disk)->exists($path), 404);
 
         $extension = pathinfo($path, PATHINFO_EXTENSION);
@@ -316,6 +316,19 @@ class AdminDashboardController extends Controller
             'subject_type' => $subject::class,
             'subject_id' => $subject->getKey(),
         ]);
+    }
+
+    private function existingDocumentUploadDisk(string $path): string
+    {
+        $configuredDisk = (string) config('filesystems.uploads.documents', 'local');
+
+        foreach (array_unique([$configuredDisk, 'local', 'public']) as $disk) {
+            if (Storage::disk($disk)->exists($path)) {
+                return $disk;
+            }
+        }
+
+        return $configuredDisk;
     }
 
     private function adminId(Request $request): int

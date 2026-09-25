@@ -214,7 +214,7 @@ class DocumentRequestController extends Controller
                     if ($request->hasFile($field->field_name)) {
                         $file = $request->file($field->field_name);
                         $fileName = Str::uuid().'.'.$file->getClientOriginalExtension();
-                        $path = Storage::disk('local')->putFileAs(
+                        $path = Storage::disk($this->documentUploadDisk())->putFileAs(
                             "document-uploads/{$documentRequest->request_id}",
                             $file,
                             $fileName,
@@ -277,6 +277,11 @@ class DocumentRequestController extends Controller
         $documentRequest->delete();
 
         return response()->json(null, 204);
+    }
+
+    private function documentUploadDisk(): string
+    {
+        return (string) config('filesystems.uploads.documents', 'local');
     }
 
     /**

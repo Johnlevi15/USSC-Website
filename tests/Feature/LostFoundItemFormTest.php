@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\Admin;
 use App\Models\LostFoundItem;
 use App\Models\User;
 use Illuminate\Foundation\Testing\LazilyRefreshDatabase;
@@ -36,9 +37,69 @@ class LostFoundItemFormTest extends TestCase
         Storage::disk('public')->assertDirectoryEmpty('/');
     }
 
-    public function test_lost_found_gallery_uses_same_origin_storage_image_urls(): void
+    public function test_submitted_lost_found_image_can_be_streamed_for_admin_review(): void
+    {
+        Storage::fake('public');
+
+        $admin = Admin::create([
+            'name' => 'Portal Administrator',
+            'email' => 'admin@example.test',
+            'password_hash' => 'not-used',
+        ]);
+
+        $this->post('/report-item', [
+            'full_name' => 'Taylor Student',
+            'email' => 'taylor@example.test',
+            'item_name' => 'Blue Umbrella',
+            'category' => 'Accessories',
+            'description' => 'Found near the main lobby.',
+            'image' => UploadedFile::fake()->image('blue-umbrella.jpg'),
+            'status' => 'found',
+            'place' => 'Main Lobby',
+        ])->assertRedirect(route('lost-found'));
+
+        $item = LostFoundItem::query()->firstOrFail();
+
+        Storage::disk('public')->assertExists((string) $item->image_path);
+
+        $this->actingAs($admin, 'admin')
+            ->get(route('admin.lost-found.review', $item))
+            ->assertOk()
+            ->assertSee('src="/lost-found-items/'.$item->item_id.'/image"', false);
+
+        $this->actingAs($admin, 'admin')
+            ->get(route('lost-found-items.image', $item))
+            ->assertOk()
+            ->assertHeader('X-Content-Type-Options', 'nosniff');
+    }
+
+    public function test_lost_found_images_use_the_configured_upload_disk(): void
+    {
+        config(['filesystems.uploads.lost_found' => 'local']);
+        Storage::fake('local');
+        Storage::fake('public');
+
+        $this->post('/report-item', [
+            'full_name' => 'Taylor Student',
+            'email' => 'taylor@example.test',
+            'item_name' => 'Blue Umbrella',
+            'category' => 'Accessories',
+            'description' => 'Found near the main lobby.',
+            'image' => UploadedFile::fake()->image('blue-umbrella.jpg'),
+            'status' => 'found',
+            'place' => 'Main Lobby',
+        ])->assertRedirect(route('lost-found'));
+
+        $item = LostFoundItem::query()->firstOrFail();
+
+        Storage::disk('local')->assertExists((string) $item->image_path);
+        Storage::disk('public')->assertMissing((string) $item->image_path);
+    }
+
+    public function test_lost_found_gallery_uses_same_origin_image_route_urls(): void
     {
         config(['app.url' => 'https://ussc.test']);
+        Storage::fake('public');
 
         $user = User::create([
             'name' => 'Taylor Student',
@@ -57,9 +118,17 @@ class LostFoundItemFormTest extends TestCase
             'place' => 'Main Lobby',
         ]);
 
+        Storage::disk('public')->put('lost-found/blue-umbrella.jpg', 'umbrella image');
+
         $this->get(route('lost-found'))
             ->assertOk()
-            ->assertSee('src="/storage/lost-found/blue-umbrella.jpg"', false)
-            ->assertDontSee('https://ussc.test/storage/lost-found/blue-umbrella.jpg', false);
+            ->assertSee('src="/lost-found-items/1/image"', false)
+            ->assertDontSee('https://ussc.test/lost-found-items/1/image', false);
+
+        $response = $this->get(route('lost-found-items.image', 1))
+            ->assertOk()
+            ->assertHeader('X-Content-Type-Options', 'nosniff');
+
+        $this->assertStringContainsString('umbrella image', $response->streamedContent());
     }
 }
