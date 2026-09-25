@@ -7,7 +7,7 @@
 </div>
 
 @if(session('success'))
-    <div id="success-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4" role="dialog" aria-modal="true" aria-labelledby="success-modal-title">
+    <div id="success-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/35 p-4 backdrop-blur-[1px]" role="dialog" aria-modal="true" aria-labelledby="success-modal-title">
         <div class="w-full max-w-md rounded-xl bg-white p-6 shadow-lg">
             <div class="text-center">
                 <div class="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-green-100">

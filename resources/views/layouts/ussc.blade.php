@@ -71,7 +71,7 @@
     </nav>
 </aside>
 <main class="flex-grow">@yield('content')</main>
-<footer class="mt-12 overflow-hidden border-t-4 border-yellow-500 bg-neutral-900 text-white" style="background-color: #171717;">
+<footer class="mt-12 block w-full shrink-0 overflow-hidden border-t-4 border-yellow-500 bg-neutral-900 pb-20 text-white md:pb-0" style="background-color: #171717;">
     <div class="mx-auto grid max-w-7xl grid-cols-1 gap-8 px-6 py-10 text-sm md:grid-cols-2 lg:grid-cols-4">
         <div class="space-y-4">
             <div class="flex items-center gap-3">
@@ -147,7 +147,7 @@
         <p>&copy; {{ now()->year }} Central Luzon State University - All Rights Reserved.</p>
     </div>
 </footer>
-<div id="portal-modal" class="hidden fixed inset-0 z-50 items-center justify-center bg-black/60 p-4" role="dialog" aria-modal="true" aria-labelledby="portal-modal-title">
+<div id="portal-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-gray-900/35 p-4 backdrop-blur-[1px]" role="dialog" aria-modal="true" aria-labelledby="portal-modal-title">
     <div class="w-full max-w-md rounded-xl bg-white p-6 text-center shadow-xl">
         <div class="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-green-100 text-xl text-green-600">
             <i class="fa-solid fa-circle-check"></i>
@@ -172,7 +172,6 @@
             mobileMenuPanel.classList.remove('translate-x-full');
             mobileMenuOpen.setAttribute('aria-expanded', 'true');
             mobileMenuPanel.setAttribute('aria-hidden', 'false');
-            document.body.classList.add('overflow-hidden');
         }
 
         function closeMobileMenu() {
@@ -180,7 +179,6 @@
             mobileMenuPanel.classList.add('translate-x-full');
             mobileMenuOpen.setAttribute('aria-expanded', 'false');
             mobileMenuPanel.setAttribute('aria-hidden', 'true');
-            document.body.classList.remove('overflow-hidden');
         }
 
         mobileMenuOpen.addEventListener('click', openMobileMenu);

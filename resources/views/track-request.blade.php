@@ -82,7 +82,7 @@
     </div>
 
     @if(session('success') && request('code'))
-        <div id="trackingSuccessModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" role="dialog" aria-modal="true" aria-labelledby="trackingSuccessTitle">
+        <div id="trackingSuccessModal" class="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/35 p-4 backdrop-blur-[1px]" role="dialog" aria-modal="true" aria-labelledby="trackingSuccessTitle">
             <div class="w-full max-w-md overflow-hidden rounded-2xl bg-white shadow-2xl">
                 <div class="bg-red-900 px-6 py-5 text-center text-white">
                     <div class="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-white/15">

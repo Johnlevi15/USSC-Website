@@ -109,7 +109,7 @@
     @endif
 </div>
 
-<div id="deleteDocumentTypeModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/60 p-4" role="dialog" aria-modal="true" aria-labelledby="deleteDocumentTypeTitle">
+<div id="deleteDocumentTypeModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-gray-900/35 p-4 backdrop-blur-[1px]" role="dialog" aria-modal="true" aria-labelledby="deleteDocumentTypeTitle">
     <div class="w-full max-w-md rounded-xl bg-white shadow-xl">
         <div class="border-b px-5 py-4">
             <h2 id="deleteDocumentTypeTitle" class="text-lg font-bold text-gray-900">Delete Document Type</h2>

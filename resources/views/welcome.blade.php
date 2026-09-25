@@ -3,7 +3,7 @@
 @section('content')
 <div
     id="welcome-privacy-modal"
-    class="fixed inset-0 z-[100] hidden items-center justify-center bg-black/60 p-4"
+    class="fixed inset-0 z-[100] hidden items-center justify-center bg-gray-900/35 p-4 backdrop-blur-[1px]"
     role="dialog"
     aria-modal="true"
     aria-labelledby="welcome-privacy-title"
