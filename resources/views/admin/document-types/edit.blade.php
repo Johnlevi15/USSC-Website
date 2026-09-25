@@ -117,11 +117,6 @@
 
                 <div class="grid grid-cols-2 gap-3">
                     <label class="block text-xs font-bold text-gray-600 uppercase">
-                        Field Name (internal)
-                        <input name="field_name" pattern="[a-z_]+" placeholder="auto-generated from label" class="mt-1 w-full rounded-lg border px-3 py-2 text-sm">
-                        <span class="text-[10px] text-gray-400 normal-case">Generated from the label. Lowercase letters and underscores only.</span>
-                    </label>
-                    <label class="block text-xs font-bold text-gray-600 uppercase">
                         Field Label (display)
                         <input required name="field_label" placeholder="e.g. Student ID Number" class="mt-1 w-full rounded-lg border px-3 py-2 text-sm">
                     </label>
@@ -191,37 +186,5 @@
         toggleFieldOptions(select);
     });
 
-    const addFieldForm = document.getElementById('add-field-form');
-
-    if (addFieldForm) {
-        const fieldName = addFieldForm.querySelector('input[name="field_name"]');
-        const fieldLabel = addFieldForm.querySelector('input[name="field_label"]');
-        let fieldNameWasEdited = false;
-
-        const generatedFieldName = (label) => label
-            .normalize('NFD')
-            .replace(/[\u0300-\u036f]/g, '')
-            .toLowerCase()
-            .replace(/[^a-z]+/g, '_')
-            .replace(/^_+|_+$/g, '')
-            .slice(0, 100);
-
-        fieldName.addEventListener('input', () => {
-            fieldNameWasEdited = fieldName.value.trim() !== '';
-        });
-
-        fieldLabel.addEventListener('input', () => {
-            if (! fieldNameWasEdited) {
-                fieldName.value = generatedFieldName(fieldLabel.value);
-            }
-        });
-
-        fieldLabel.addEventListener('blur', () => {
-            if (fieldName.value.trim() === '') {
-                fieldName.value = generatedFieldName(fieldLabel.value);
-                fieldNameWasEdited = false;
-            }
-        });
-    }
 </script>
 @endsection

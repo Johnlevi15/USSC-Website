@@ -107,7 +107,7 @@ class DocumentRequestFormTest extends TestCase
         ]);
     }
 
-    public function test_admin_document_type_edit_form_explains_generated_internal_field_names(): void
+    public function test_admin_document_type_edit_form_hides_internal_field_names(): void
     {
         $admin = Admin::create([
             'name' => 'Portal Administrator',
@@ -124,8 +124,8 @@ class DocumentRequestFormTest extends TestCase
         $this->actingAs($admin, 'admin')
             ->get(route('admin.document-types.edit', $documentType))
             ->assertOk()
-            ->assertSee('placeholder="auto-generated from label"', false)
-            ->assertSee('Generated from the label. Lowercase letters and underscores only.')
+            ->assertDontSee('name="field_name"', false)
+            ->assertDontSeeText('Field Name (internal)')
             ->assertSeeText('Enter one option per line. Use "Other" to let users type a custom answer.');
     }
 
