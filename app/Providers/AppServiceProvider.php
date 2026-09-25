@@ -38,6 +38,14 @@ class AppServiceProvider extends ServiceProvider
                 ->response(fn (Request $request, array $headers): Response => $this->throttledResponse($request, $headers, 'admin-login'));
         });
 
+        RateLimiter::for('admin-password-reset', function (Request $request): Limit {
+            $email = Str::lower((string) $request->input('email', ''));
+
+            return Limit::perMinute(5)
+                ->by($email.'|'.$request->ip())
+                ->response(fn (Request $request, array $headers): Response => $this->throttledResponse($request, $headers, 'admin-password-reset'));
+        });
+
         RateLimiter::for('uploads', function (Request $request): Limit {
             return Limit::perMinutes(10, 10)
                 ->by($request->ip())

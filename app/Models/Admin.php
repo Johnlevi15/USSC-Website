@@ -2,8 +2,11 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Relations\HasMany;
+use App\Notifications\AdminResetPasswordNotification;
+use Illuminate\Auth\Passwords\CanResetPassword as CanResetPasswordTrait;
+use Illuminate\Contracts\Auth\CanResetPassword;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
@@ -13,9 +16,9 @@ use Illuminate\Notifications\Notifiable;
  * Admins have their own authentication system and are not tied to the users table.
  * They manage document requests, events, lost & found items, and send email notifications.
  */
-class Admin extends Authenticatable
+class Admin extends Authenticatable implements CanResetPassword
 {
-    use Notifiable;
+    use CanResetPasswordTrait, Notifiable;
 
     protected $table = 'admins';
 
@@ -36,6 +39,11 @@ class Admin extends Authenticatable
     public function getAuthPassword(): string
     {
         return $this->password_hash;
+    }
+
+    public function sendPasswordResetNotification(#[\SensitiveParameter] $token): void
+    {
+        $this->notify(new AdminResetPasswordNotification($token));
     }
 
     public function reviewedRequests(): HasMany

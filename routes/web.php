@@ -3,6 +3,7 @@
 use App\Http\Controllers\Admin\DocumentTypeController as AdminDocumentTypeController;
 use App\Http\Controllers\AdminAuthController;
 use App\Http\Controllers\AdminDashboardController;
+use App\Http\Controllers\AdminPasswordResetController;
 use App\Http\Controllers\ChatbotController;
 use App\Http\Controllers\DocumentRequestController;
 use App\Http\Controllers\EventController;
@@ -49,6 +50,12 @@ Route::get('/admin-login', [AdminAuthController::class, 'create'])->name('admin-
 Route::post('/admin-login', [AdminAuthController::class, 'store'])
     ->middleware('throttle:admin-login')
     ->name('admin-login.store');
+Route::get('/admin/forgot-password', [AdminPasswordResetController::class, 'create'])->name('admin.password.request');
+Route::post('/admin/forgot-password', [AdminPasswordResetController::class, 'store'])
+    ->middleware('throttle:admin-password-reset')
+    ->name('admin.password.email');
+Route::get('/admin/reset-password/{token}', [AdminPasswordResetController::class, 'edit'])->name('admin.password.reset');
+Route::post('/admin/reset-password', [AdminPasswordResetController::class, 'update'])->name('admin.password.update');
 Route::post('/admin-logout', [AdminAuthController::class, 'destroy'])
     ->middleware('auth:admin')
     ->name('admin-logout');
