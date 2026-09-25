@@ -30,27 +30,7 @@
 				</label>
 
 				<div id="type-description" class="text-sm text-gray-600 mt-1 hidden"></div>
-<label class="block text-xs font-bold text-gray-600 uppercase">
-    Full Name
-    <input
-        type="text"
-        name="full_name"
-        value="{{ old('full_name') }}"
-        required
-        class="mt-1 w-full rounded-lg border px-3 py-2 text-sm"
-    >
-</label>
 
-<label class="block text-xs font-bold text-gray-600 uppercase">
-    Email Address
-    <input
-        type="email"
-        name="email"
-        value="{{ old('email') }}"
-        required
-        class="mt-1 w-full rounded-lg border px-3 py-2 text-sm"
-    >
-</label>
 				{{-- Dynamic fields loaded via AJAX --}}
 				<div id="dynamic-fields" class="space-y-3"></div>
 
