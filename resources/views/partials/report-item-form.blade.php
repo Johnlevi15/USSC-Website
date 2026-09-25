@@ -9,9 +9,18 @@
             <button type="button" onclick="toggleReportForm(false)" class="px-3 py-2 text-xs font-bold text-gray-600 border rounded-lg hover:bg-gray-50">
                 CLOSE
             </button>
+            @php($selectedStatus = old('status', request('type', 'found')))
             <div class="grid grid-cols-2 gap-1 p-1 bg-gray-100 rounded-lg">
-                <button type="button" onclick="setType('found')" id="found" class="px-3 py-2 rounded-md bg-red-900 text-white text-xs font-bold">FOUND</button>
-                <button type="button" onclick="setType('lost')" id="lost" class="px-3 py-2 rounded-md text-gray-600 text-xs font-bold">LOST</button>
+                <button type="button" onclick="setType('found')" id="found" @class([
+                    'px-3 py-2 rounded-md text-xs font-bold',
+                    'bg-red-900 text-white' => $selectedStatus === 'found',
+                    'text-gray-600' => $selectedStatus !== 'found',
+                ])>FOUND</button>
+                <button type="button" onclick="setType('lost')" id="lost" @class([
+                    'px-3 py-2 rounded-md text-xs font-bold',
+                    'bg-red-900 text-white' => $selectedStatus === 'lost',
+                    'text-gray-600' => $selectedStatus !== 'lost',
+                ])>LOST</button>
             </div>
         </div>
     </div>
@@ -53,15 +62,15 @@
             <input type="file" name="image" accept="image/jpeg,image/png,image/webp" class="mt-1 w-full px-3 py-2 text-sm border rounded-lg bg-white">
         </label>
 
-        <input type="hidden" name="status" id="status" value="{{ old('status', request('type', 'found')) }}">
+        <input type="hidden" name="status" id="status" value="{{ $selectedStatus }}">
 
         <label class="block text-xs font-bold text-gray-600 uppercase md:col-span-2">
-            <span id="place-label">{{ old('status', request('type', 'found')) === 'lost' ? 'Location (Where Lost)' : 'Place Found' }}</span>
+            <span id="place-label">{{ $selectedStatus === 'lost' ? 'Location (Where Lost)' : 'Place Found' }}</span>
             <input required name="place" value="{{ old('place') }}" class="mt-1 w-full px-3 py-2 text-sm border rounded-lg">
         </label>
 
         <button id="submit" class="md:col-span-2 w-full py-2.5 bg-red-900 text-white font-bold rounded-lg text-sm">
-            {{ old('status', request('type', 'found')) === 'lost' ? 'SUBMIT LOST ITEM REPORT' : 'SUBMIT FOUND ITEM REPORT' }}
+            {{ $selectedStatus === 'lost' ? 'SUBMIT LOST ITEM REPORT' : 'SUBMIT FOUND ITEM REPORT' }}
         </button>
     </form>
 </div>
@@ -89,7 +98,7 @@
                 ? 'px-3 py-2 rounded-md text-gray-600 text-xs font-bold'
                 : 'px-3 py-2 rounded-md bg-red-900 text-white text-xs font-bold';
             document.getElementById('lost').className = lost
-                ? 'px-3 py-2 rounded-md bg-yellow-600 text-white text-xs font-bold'
+                ? 'px-3 py-2 rounded-md bg-red-900 text-white text-xs font-bold'
                 : 'px-3 py-2 rounded-md text-gray-600 text-xs font-bold';
             document.getElementById('place-label').textContent = lost
                 ? 'Place Lost'

@@ -38,6 +38,24 @@
     </div>
 </div>
 
+@if(session('success'))
+    <div id="success-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4" role="dialog" aria-modal="true" aria-labelledby="success-modal-title">
+        <div class="w-full max-w-md rounded-xl bg-white p-6 shadow-lg">
+            <div class="text-center">
+                <div class="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-green-100">
+                    <i class="fa-solid fa-check text-green-700"></i>
+                </div>
+                <h3 id="success-modal-title" class="text-lg font-bold text-gray-900">Changes Saved</h3>
+                <p class="mt-2 text-sm text-gray-600">{{ session('success') }}</p>
+            </div>
+
+            <button type="button" onclick="closeSuccessModal()" class="mt-5 w-full rounded-lg bg-red-900 px-4 py-2.5 text-sm font-bold text-white hover:bg-red-800">
+                Close
+            </button>
+        </div>
+    </div>
+@endif
+
 <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
     <div class="space-y-6 lg:col-span-2">
         <section class="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
@@ -161,3 +179,11 @@
     </aside>
 </div>
 @endsection
+
+@push('scripts')
+<script>
+    function closeSuccessModal() {
+        document.getElementById('success-modal')?.remove();
+    }
+</script>
+@endpush

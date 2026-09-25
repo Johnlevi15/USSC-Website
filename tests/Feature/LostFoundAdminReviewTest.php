@@ -154,9 +154,14 @@ class LostFoundAdminReviewTest extends TestCase
         Storage::disk('public')->put('lost-found/blue-umbrella.jpg', 'umbrella image');
 
         $this->actingAs($admin, 'admin')
+            ->followingRedirects()
             ->patch(route('admin.lost-found.archive.store', $item))
-            ->assertRedirect(route('admin.lost-found'))
-            ->assertSessionHas('success', 'Lost-and-found item archived.');
+            ->assertOk()
+            ->assertSee('id="success-modal"', false)
+            ->assertSee('role="dialog"', false)
+            ->assertSeeText('Changes Saved')
+            ->assertSeeText('Lost-and-found item archived.')
+            ->assertSee('onclick="closeSuccessModal()"', false);
 
         $this->assertNotNull($item->fresh()->archived_at);
         $this->assertSame($admin->admin_id, $item->fresh()->archived_by);
@@ -169,9 +174,12 @@ class LostFoundAdminReviewTest extends TestCase
             ->assertSeeText('Restore');
 
         $this->actingAs($admin, 'admin')
+            ->followingRedirects()
             ->patch(route('admin.lost-found.restore', $item))
-            ->assertRedirect(route('admin.lost-found.archive'))
-            ->assertSessionHas('success', 'Lost-and-found item restored.');
+            ->assertOk()
+            ->assertSee('id="success-modal"', false)
+            ->assertSeeText('Changes Saved')
+            ->assertSeeText('Lost-and-found item restored.');
 
         $this->assertNull($item->fresh()->archived_at);
         $this->assertNull($item->fresh()->archived_by);
@@ -202,13 +210,16 @@ class LostFoundAdminReviewTest extends TestCase
         ]);
 
         $this->actingAs($admin, 'admin')
+            ->followingRedirects()
             ->patch(route('admin.lost-found.update', $item), [
                 'approval_status' => 'approved',
                 'status' => 'found',
                 'admin_remarks' => 'Ready for claiming at the USSC office.',
             ])
-            ->assertRedirect(route('admin.lost-found.review', $item))
-            ->assertSessionHas('success', 'Lost-and-found item status updated.');
+            ->assertOk()
+            ->assertSee('id="success-modal"', false)
+            ->assertSeeText('Changes Saved')
+            ->assertSeeText('Lost-and-found item status updated.');
 
         $this->assertDatabaseHas('lost_found_items', [
             'item_id' => $item->item_id,

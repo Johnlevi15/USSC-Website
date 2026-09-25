@@ -73,7 +73,12 @@ class LostFoundItemFormTest extends TestCase
 
         $this->get(route('lost-found'))
             ->assertOk()
-            ->assertSeeText('Your item report was submitted for admin approval.');
+            ->assertSee('id="success-modal"', false)
+            ->assertSee('role="dialog"', false)
+            ->assertSeeText('Report Submitted Successfully!')
+            ->assertSeeText('Your item report was submitted for admin approval.')
+            ->assertSee('onclick="closeSuccessModal()"', false)
+            ->assertDontSee('rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm font-semibold text-green-800', false);
     }
 
     public function test_submitted_lost_found_image_can_be_streamed_for_admin_review(): void
