@@ -13,6 +13,7 @@ use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 use Symfony\Component\HttpFoundation\StreamedResponse;
+use Throwable;
 
 class LostFoundItemController extends Controller
 {
@@ -49,7 +50,13 @@ class LostFoundItemController extends Controller
 
         $path = (string) $lostFoundItem->image_path;
         abort_unless(Str::startsWith($path, 'lost-found/'), 404);
-        $stream = Storage::disk($this->lostFoundDisk())->readStream($path);
+        try {
+            $stream = Storage::disk($this->lostFoundDisk())->readStream($path);
+        } catch (Throwable $exception) {
+            report($exception);
+            abort(404);
+        }
+
         abort_unless(is_resource($stream), 404);
 
         $extension = pathinfo($path, PATHINFO_EXTENSION);
@@ -203,11 +210,19 @@ class LostFoundItemController extends Controller
             return null;
         }
 
-        $path = $request->file('image')->store('lost-found', $this->lostFoundDisk());
+        try {
+            $path = $request->file('image')->store('lost-found', $this->lostFoundDisk());
+        } catch (Throwable $exception) {
+            report($exception);
+
+            throw ValidationException::withMessages([
+                'image' => 'The image could not be uploaded. Please check storage settings and try again.',
+            ]);
+        }
 
         if (! is_string($path) || $path === '') {
             throw ValidationException::withMessages([
-                'image' => 'The image could not be uploaded. Please try again.',
+                'image' => 'The image could not be uploaded. Please check storage settings and try again.',
             ]);
         }
 

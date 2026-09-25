@@ -8,6 +8,7 @@ use App\Models\User;
 use Illuminate\Foundation\Testing\LazilyRefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
+use League\Flysystem\UnableToWriteFile;
 use Tests\TestCase;
 
 class LostFoundItemFormTest extends TestCase
@@ -95,6 +96,30 @@ class LostFoundItemFormTest extends TestCase
 
         Storage::disk('local')->assertExists((string) $item->image_path);
         Storage::disk('public')->assertMissing((string) $item->image_path);
+    }
+
+    public function test_item_report_shows_validation_error_when_image_storage_fails(): void
+    {
+        Storage::shouldReceive('disk')
+            ->with('public')
+            ->andThrow(UnableToWriteFile::atLocation('lost-found/blue-umbrella.jpg'));
+
+        $this->from('/lost-found')->post('/report-item', [
+            'full_name' => 'Taylor Student',
+            'email' => 'taylor@example.test',
+            'item_name' => 'Blue Umbrella',
+            'category' => 'Accessories',
+            'description' => 'Found near the main lobby.',
+            'image' => UploadedFile::fake()->image('blue-umbrella.jpg'),
+            'status' => 'found',
+            'place' => 'Main Lobby',
+        ])
+            ->assertRedirect('/lost-found')
+            ->assertSessionHasErrors('image');
+
+        $this->assertDatabaseMissing('lost_found_items', [
+            'item_name' => 'Blue Umbrella',
+        ]);
     }
 
     public function test_lost_found_gallery_uses_same_origin_image_route_urls(): void

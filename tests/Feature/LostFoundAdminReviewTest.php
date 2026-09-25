@@ -15,6 +15,7 @@ class LostFoundAdminReviewTest extends TestCase
 
     public function test_admin_can_review_lost_found_item_details(): void
     {
+        config(['filesystems.uploads.lost_found' => 'public']);
         Storage::fake('public');
 
         $admin = Admin::create([
