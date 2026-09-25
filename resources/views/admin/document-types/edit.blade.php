@@ -88,9 +88,9 @@
                             </label>
 
                             <label class="field-options-wrapper hidden text-xs font-bold text-gray-600 uppercase">
-                                Options for Select or Checkbox (Follow format)
-                                <textarea name="field_options" rows="2" placeholder='["Option 1", "Option 2"]' class="field-options mt-1 w-full rounded-lg border px-3 py-2 text-sm font-mono">{{ $field->field_options ? json_encode($field->field_options) : '' }}</textarea>
-                                <span class="text-[10px] text-gray-400 normal-case">Use "Other" to let users type a custom answer. For one checkbox, use one option only, e.g. ["I agree"].</span>
+                                Options for Select or Checkbox
+                                <textarea name="field_options" rows="4" placeholder="Option 1&#10;Option 2&#10;Other" class="field-options mt-1 w-full rounded-lg border px-3 py-2 text-sm">{{ $field->field_options ? implode("\n", $field->field_options) : '' }}</textarea>
+                                <span class="text-[10px] text-gray-400 normal-case">Enter one option per line. Use "Other" to let users type a custom answer.</span>
                             </label>
 
                             <label class="flex items-center gap-2 text-sm font-semibold text-gray-700">
@@ -112,14 +112,14 @@
         {{-- Add Field Form --}}
         <div class="rounded-lg border-2 border-dashed border-gray-300 p-4">
             <h3 class="text-sm font-bold text-gray-600 mb-3">Add New Field</h3>
-            <form method="POST" action="{{ route('admin.document-types.fields.add', $documentType) }}" class="space-y-3">
+            <form id="add-field-form" method="POST" action="{{ route('admin.document-types.fields.add', $documentType) }}" class="space-y-3">
                 @csrf
 
                 <div class="grid grid-cols-2 gap-3">
                     <label class="block text-xs font-bold text-gray-600 uppercase">
                         Field Name (internal)
-                        <input required name="field_name" pattern="[a-z_]+" placeholder="e.g. student_id" class="mt-1 w-full rounded-lg border px-3 py-2 text-sm">
-                        <span class="text-[10px] text-gray-400 normal-case">Lowercase letters and underscores only</span>
+                        <input name="field_name" pattern="[a-z_]+" placeholder="auto-generated from label" class="mt-1 w-full rounded-lg border px-3 py-2 text-sm">
+                        <span class="text-[10px] text-gray-400 normal-case">Generated from the label. Lowercase letters and underscores only.</span>
                     </label>
                     <label class="block text-xs font-bold text-gray-600 uppercase">
                         Field Label (display)
@@ -149,9 +149,9 @@
                 </div>
 
                 <label class="field-options-wrapper hidden text-xs font-bold text-gray-600 uppercase">
-                    Options for Select or Checkbox (Follow format)
-                    <textarea name="field_options" rows="2" placeholder='["Option 1", "Option 2"]' class="field-options mt-1 w-full rounded-lg border px-3 py-2 text-sm font-mono"></textarea>
-                    <span class="text-[10px] text-gray-400 normal-case">Use "Other" to let users type a custom answer. For one checkbox, use one option only, e.g. ["I agree"].</span>
+                    Options for Select or Checkbox
+                    <textarea name="field_options" rows="4" placeholder="Option 1&#10;Option 2&#10;Other" class="field-options mt-1 w-full rounded-lg border px-3 py-2 text-sm"></textarea>
+                    <span class="text-[10px] text-gray-400 normal-case">Enter one option per line. Use "Other" to let users type a custom answer.</span>
                 </label>
 
                 <label class="flex items-center gap-2 text-sm font-semibold text-gray-700">
@@ -190,5 +190,38 @@
         select.addEventListener('change', () => toggleFieldOptions(select));
         toggleFieldOptions(select);
     });
+
+    const addFieldForm = document.getElementById('add-field-form');
+
+    if (addFieldForm) {
+        const fieldName = addFieldForm.querySelector('input[name="field_name"]');
+        const fieldLabel = addFieldForm.querySelector('input[name="field_label"]');
+        let fieldNameWasEdited = false;
+
+        const generatedFieldName = (label) => label
+            .normalize('NFD')
+            .replace(/[\u0300-\u036f]/g, '')
+            .toLowerCase()
+            .replace(/[^a-z]+/g, '_')
+            .replace(/^_+|_+$/g, '')
+            .slice(0, 100);
+
+        fieldName.addEventListener('input', () => {
+            fieldNameWasEdited = fieldName.value.trim() !== '';
+        });
+
+        fieldLabel.addEventListener('input', () => {
+            if (! fieldNameWasEdited) {
+                fieldName.value = generatedFieldName(fieldLabel.value);
+            }
+        });
+
+        fieldLabel.addEventListener('blur', () => {
+            if (fieldName.value.trim() === '') {
+                fieldName.value = generatedFieldName(fieldLabel.value);
+                fieldNameWasEdited = false;
+            }
+        });
+    }
 </script>
 @endsection

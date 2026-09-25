@@ -9,6 +9,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 
@@ -93,14 +94,19 @@ class DocumentTypeController extends Controller
     public function addField(Request $request, DocumentType $documentType): RedirectResponse
     {
         $validated = $request->validate([
-            'field_name' => ['required', 'string', 'max:100', 'regex:/^[a-z_]+$/'],
+            'field_name' => ['nullable', 'string', 'max:100', 'regex:/^[a-z_]+$/'],
             'field_label' => ['required', 'string', 'max:150'],
             'field_type' => ['required', 'in:text,email,textarea,number,date,select,checkbox,file,image'],
-            'field_options' => ['nullable', 'json'],
+            'field_options' => ['nullable', 'string', 'max:2000'],
             'is_required' => ['sometimes', 'boolean'],
             'validation_rules' => ['nullable', 'string', 'max:255'],
         ]);
 
+        $validated['field_name'] = $this->fieldName(
+            $validated['field_name'] ?? null,
+            $validated['field_label'],
+            $documentType,
+        );
         $validated['is_required'] = $request->boolean('is_required');
 
         $validated['field_options'] = $this->fieldOptions($validated);
@@ -122,7 +128,7 @@ class DocumentTypeController extends Controller
         $validated = $request->validate([
             'field_label' => ['required', 'string', 'max:150'],
             'field_type' => ['required', 'in:text,email,textarea,number,date,select,checkbox,file,image'],
-            'field_options' => ['nullable', 'json'],
+            'field_options' => ['nullable', 'string', 'max:2000'],
             'is_required' => ['sometimes', 'boolean'],
             'validation_rules' => ['nullable', 'string', 'max:255'],
         ]);
@@ -159,19 +165,39 @@ class DocumentTypeController extends Controller
         return back()->with('success', 'Fields reordered successfully.');
     }
 
+    private function fieldName(?string $fieldName, string $fieldLabel, DocumentType $documentType): string
+    {
+        if (is_string($fieldName) && trim($fieldName) !== '') {
+            return trim($fieldName);
+        }
+
+        $baseName = trim((string) Str::of($fieldLabel)
+            ->ascii()
+            ->lower()
+            ->replaceMatches('/[^a-z]+/', '_'), '_');
+
+        $baseName = $baseName !== '' ? Str::limit($baseName, 100, '') : 'field';
+        $generatedName = $baseName;
+
+        while ($documentType->fields()->where('field_name', $generatedName)->exists()) {
+            $generatedName = Str::limit($baseName, 95, '').'_copy';
+            $baseName = $generatedName;
+        }
+
+        return $generatedName;
+    }
+
     /**
      * @param  array{field_type: string, field_options?: string|null}  $validated
      * @return list<string>|null
      */
     private function fieldOptions(array $validated): ?array
     {
-        $options = isset($validated['field_options']) && is_string($validated['field_options'])
-            ? json_decode($validated['field_options'], true)
-            : null;
+        $options = $this->optionLines($validated['field_options'] ?? null);
 
         if ($validated['field_type'] === 'checkbox' && ! is_array($options)) {
             throw ValidationException::withMessages([
-                'field_options' => 'Checkbox fields need at least one option in JSON format, for example ["Yes"].',
+                'field_options' => 'Checkbox fields need at least one option.',
             ]);
         }
 
@@ -188,5 +214,31 @@ class DocumentTypeController extends Controller
         }
 
         return $options;
+    }
+
+    /**
+     * @return list<string>|null
+     */
+    private function optionLines(?string $fieldOptions): ?array
+    {
+        if (! is_string($fieldOptions) || trim($fieldOptions) === '') {
+            return null;
+        }
+
+        $jsonOptions = json_decode($fieldOptions, true);
+
+        if (is_array($jsonOptions)) {
+            return array_values(array_filter(array_map(
+                fn (mixed $option): string => is_string($option) ? trim($option) : '',
+                $jsonOptions,
+            ), fn (string $option): bool => $option !== ''));
+        }
+
+        $options = preg_split('/\R/', $fieldOptions) ?: [];
+
+        return array_values(array_filter(array_map(
+            fn (string $option): string => trim($option),
+            $options,
+        ), fn (string $option): bool => $option !== ''));
     }
 }

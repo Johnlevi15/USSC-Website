@@ -79,6 +79,13 @@
                         @php
                             $definition = $typeFields->get($field->field_name);
                             $label = $definition?->field_label ?? \Illuminate\Support\Str::headline($field->field_name);
+                            $decodedValue = is_string($field->field_value) ? json_decode($field->field_value, true) : null;
+                            $displayValues = is_array($decodedValue)
+                                ? array_values(array_filter(array_map(
+                                    fn ($value) => is_scalar($value) ? trim((string) $value) : '',
+                                    $decodedValue,
+                                ), fn ($value) => $value !== ''))
+                                : null;
                         @endphp
                         <div class="grid grid-cols-1 gap-1 px-5 py-4 sm:grid-cols-[220px_1fr] sm:gap-6">
                             <p class="text-xs font-bold uppercase tracking-wide text-gray-500">{{ $label }}</p>
@@ -92,6 +99,12 @@
                                         <i class="fa-solid fa-paperclip"></i>
                                         Open Attachment
                                     </a>
+                                @elseif($displayValues)
+                                    <ul class="space-y-1 text-sm text-gray-900">
+                                        @foreach($displayValues as $value)
+                                            <li>{{ $value }}</li>
+                                        @endforeach
+                                    </ul>
                                 @else
                                     <p class="whitespace-pre-line break-words text-sm text-gray-900">{{ $field->field_value }}</p>
                                 @endif

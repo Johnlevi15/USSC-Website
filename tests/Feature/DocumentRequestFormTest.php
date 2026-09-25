@@ -93,7 +93,7 @@ class DocumentRequestFormTest extends TestCase
                 'field_name' => 'confirm_clearance',
                 'field_label' => 'I confirm this request is accurate',
                 'field_type' => 'checkbox',
-                'field_options' => '["I confirm this request is accurate"]',
+                'field_options' => 'I confirm this request is accurate',
                 'is_required' => '1',
             ])
             ->assertRedirect();
@@ -104,6 +104,97 @@ class DocumentRequestFormTest extends TestCase
             'field_type' => 'checkbox',
             'field_options' => json_encode(['I confirm this request is accurate']),
             'is_required' => true,
+        ]);
+    }
+
+    public function test_admin_document_type_edit_form_explains_generated_internal_field_names(): void
+    {
+        $admin = Admin::create([
+            'name' => 'Portal Administrator',
+            'email' => 'admin@example.test',
+            'password_hash' => 'not-used',
+        ]);
+
+        $documentType = DocumentType::create([
+            'name' => 'Scholarship Request',
+            'description' => 'Scholarship form',
+            'is_active' => true,
+        ]);
+
+        $this->actingAs($admin, 'admin')
+            ->get(route('admin.document-types.edit', $documentType))
+            ->assertOk()
+            ->assertSee('placeholder="auto-generated from label"', false)
+            ->assertSee('Generated from the label. Lowercase letters and underscores only.')
+            ->assertSeeText('Enter one option per line. Use "Other" to let users type a custom answer.');
+    }
+
+    public function test_admin_can_create_a_document_type_field_without_typing_an_internal_name(): void
+    {
+        $admin = Admin::create([
+            'name' => 'Portal Administrator',
+            'email' => 'admin@example.test',
+            'password_hash' => 'not-used',
+        ]);
+
+        $documentType = DocumentType::create([
+            'name' => 'Scholarship Request',
+            'description' => 'Scholarship form',
+            'is_active' => true,
+        ]);
+
+        $this->actingAs($admin, 'admin')
+            ->post(route('admin.document-types.fields.add', $documentType), [
+                'field_label' => 'Student ID Number',
+                'field_type' => 'text',
+                'is_required' => '1',
+            ])
+            ->assertRedirect();
+
+        $this->assertDatabaseHas('document_type_fields', [
+            'document_type_id' => $documentType->id,
+            'field_name' => 'student_id_number',
+            'field_label' => 'Student ID Number',
+            'field_type' => 'text',
+            'is_required' => true,
+        ]);
+    }
+
+    public function test_generated_document_type_field_names_are_unique_within_the_document_type(): void
+    {
+        $admin = Admin::create([
+            'name' => 'Portal Administrator',
+            'email' => 'admin@example.test',
+            'password_hash' => 'not-used',
+        ]);
+
+        $documentType = DocumentType::create([
+            'name' => 'Scholarship Request',
+            'description' => 'Scholarship form',
+            'is_active' => true,
+        ]);
+
+        DocumentTypeField::create([
+            'document_type_id' => $documentType->id,
+            'field_name' => 'student_id_number',
+            'field_label' => 'Student ID Number',
+            'field_type' => 'text',
+            'is_required' => false,
+            'display_order' => 1,
+        ]);
+
+        $this->actingAs($admin, 'admin')
+            ->post(route('admin.document-types.fields.add', $documentType), [
+                'field_label' => 'Student ID Number',
+                'field_type' => 'text',
+            ])
+            ->assertRedirect();
+
+        $this->assertDatabaseHas('document_type_fields', [
+            'document_type_id' => $documentType->id,
+            'field_name' => 'student_id_number_copy',
+            'field_label' => 'Student ID Number',
+            'field_type' => 'text',
         ]);
     }
 
@@ -134,7 +225,7 @@ class DocumentRequestFormTest extends TestCase
             ->put(route('admin.document-types.fields.update', $field), [
                 'field_label' => 'Purpose of Request',
                 'field_type' => 'select',
-                'field_options' => '["Scholarship Application", "Other"]',
+                'field_options' => "Scholarship Application\nOther",
                 'is_required' => '1',
                 'validation_rules' => 'max:255',
             ])
@@ -460,6 +551,56 @@ class DocumentRequestFormTest extends TestCase
             'field_name' => 'registration_form',
         ]);
         Storage::disk('local')->assertDirectoryEmpty('/');
+    }
+
+    public function test_admin_document_review_displays_checkbox_values_as_readable_options(): void
+    {
+        $admin = Admin::create([
+            'name' => 'Portal Administrator',
+            'email' => 'admin@example.test',
+            'password_hash' => 'not-used',
+        ]);
+
+        $user = User::create([
+            'name' => 'Taylor Student',
+            'email' => 'taylor@example.test',
+        ]);
+
+        $documentType = DocumentType::create([
+            'name' => 'Clearance Request',
+            'description' => 'Clearance form',
+            'is_active' => true,
+        ]);
+
+        DocumentTypeField::create([
+            'document_type_id' => $documentType->id,
+            'field_name' => 'requested_fees',
+            'field_label' => 'Requested Fees',
+            'field_type' => 'checkbox',
+            'field_options' => ['ID Fee', 'Certification Fee', 'Transcript Fee'],
+            'is_required' => true,
+            'display_order' => 1,
+        ]);
+
+        $documentRequest = DocumentRequest::create([
+            'user_id' => $user->id,
+            'document_type_id' => $documentType->id,
+            'status' => 'pending',
+        ]);
+
+        Document::create([
+            'request_id' => $documentRequest->request_id,
+            'field_name' => 'requested_fees',
+            'field_value' => '["ID Fee","Certification Fee"]',
+        ]);
+
+        $this->actingAs($admin, 'admin')
+            ->get(route('admin.documents.review', $documentRequest))
+            ->assertOk()
+            ->assertSeeText('Requested Fees')
+            ->assertSeeText('ID Fee')
+            ->assertSeeText('Certification Fee')
+            ->assertDontSee('["ID Fee","Certification Fee"]');
     }
 
     public function test_admin_can_view_document_request_file_attachment(): void
