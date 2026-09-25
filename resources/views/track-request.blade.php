@@ -22,7 +22,7 @@
                 <p class="mt-1 text-xs text-gray-500">No login is required. Enter the tracking number you received after submitting your request.</p>
             </div>
 
-            <form method="GET" action="{{ route('track-request') }}" class="mx-auto flex max-w-md gap-2">
+            <form method="GET" action="{{ route('track-request') }}" class="mx-auto flex max-w-md flex-col gap-2 sm:flex-row">
                 <input
                     id="code"
                     name="code"

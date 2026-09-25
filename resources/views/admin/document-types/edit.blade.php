@@ -2,10 +2,10 @@
 @section('title', 'Edit Document Type | USSC Admin')
 @section('content')
 <div class="max-w-3xl space-y-6">
-    <h1 class="text-2xl font-bold">Edit: {{ $documentType->name }}</h1>
+    <h1 class="break-words text-2xl font-bold">Edit: {{ $documentType->name }}</h1>
 
     {{-- Document Type Info --}}
-    <form method="POST" action="{{ route('admin.document-types.update', $documentType) }}" class="space-y-4 rounded-lg border bg-white p-6">
+    <form method="POST" action="{{ route('admin.document-types.update', $documentType) }}" class="space-y-4 rounded-lg border bg-white p-4 sm:p-6">
         @csrf @method('PUT')
 
         <label class="block text-xs font-bold text-gray-600 uppercase">
@@ -23,14 +23,14 @@
             Active (shown to users)
         </label>
 
-        <div class="flex gap-3 pt-2">
-            <a href="{{ route('admin.document-types.index') }}" class="rounded-lg border px-4 py-2 text-sm font-semibold hover:bg-gray-50">Cancel</a>
+        <div class="flex flex-col-reverse gap-2 pt-2 sm:flex-row sm:items-center">
+            <a href="{{ route('admin.document-types.index') }}" class="inline-flex justify-center rounded-lg border px-4 py-2 text-sm font-semibold hover:bg-gray-50">Cancel</a>
             <button class="rounded-lg bg-red-900 px-4 py-2 text-sm font-semibold text-white hover:bg-red-800">Save Changes</button>
         </div>
     </form>
 
     {{-- Fields Management --}}
-    <div class="rounded-lg border bg-white p-6">
+    <div class="rounded-lg border bg-white p-4 sm:p-6">
         <h2 class="text-lg font-bold mb-4">Form Fields</h2>
 
         @if($documentType->fields->isEmpty())
@@ -39,20 +39,30 @@
             <div id="fields-list" class="space-y-2 mb-6">
                 @foreach($documentType->fields as $field)
                 <div class="rounded-lg border bg-gray-50 text-sm" data-id="{{ $field->id }}">
-                    <div class="flex items-center gap-3 px-4 py-3">
-                        <span class="cursor-grab text-gray-400 hover:text-gray-600"><i class="fa-solid fa-grip-vertical"></i></span>
-                        <span class="font-semibold">{{ $field->field_label }}</span>
-                        <span class="rounded bg-gray-200 px-2 py-0.5 text-xs text-gray-600">{{ $field->field_type }}</span>
-                        @if($field->is_required)
-                            <span class="rounded bg-red-100 px-2 py-0.5 text-xs text-red-700">Required</span>
-                        @endif
-                        <div class="ml-auto flex gap-2">
-                            <button type="button" onclick="toggleFieldEditor('field-editor-{{ $field->id }}')" class="text-xs font-semibold text-red-900 hover:text-red-700">
-                                <i class="fa-solid fa-pen-to-square mr-1"></i>Edit
+                    <div class="flex flex-col gap-3 px-4 py-3 sm:flex-row sm:items-center">
+                        <div class="flex min-w-0 flex-1 items-start gap-3">
+                            <span class="mt-0.5 cursor-grab text-gray-400 hover:text-gray-600"><i class="fa-solid fa-grip-vertical"></i></span>
+                            <div class="min-w-0">
+                                <span class="block break-words font-semibold">{{ $field->field_label }}</span>
+                                <div class="mt-1 flex flex-wrap gap-1.5">
+                                    <span class="rounded bg-gray-200 px-2 py-0.5 text-xs text-gray-600">{{ $field->field_type }}</span>
+                                    @if($field->is_required)
+                                        <span class="rounded bg-red-100 px-2 py-0.5 text-xs text-red-700">Required</span>
+                                    @endif
+                                </div>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-2 gap-2 sm:flex sm:shrink-0">
+                            <button type="button" onclick="toggleFieldEditor('field-editor-{{ $field->id }}')" class="inline-flex items-center justify-center gap-1.5 rounded-lg border border-gray-300 bg-white px-3 py-2 text-xs font-bold text-gray-700 hover:bg-gray-50">
+                                <i class="fa-solid fa-pen-to-square"></i>
+                                Edit
                             </button>
                             <form method="POST" action="{{ route('admin.document-types.fields.delete', $field) }}" onsubmit="return confirm('Delete this field?')">
                                 @csrf @method('DELETE')
-                                <button class="text-red-600 hover:text-red-800 text-xs"><i class="fa-solid fa-trash"></i></button>
+                                <button class="inline-flex w-full items-center justify-center gap-1.5 rounded-lg bg-red-700 px-3 py-2 text-xs font-bold text-white hover:bg-red-800">
+                                    <i class="fa-solid fa-trash"></i>
+                                    Delete
+                                </button>
                             </form>
                         </div>
                     </div>
@@ -61,7 +71,7 @@
                         <form method="POST" action="{{ route('admin.document-types.fields.update', $field) }}" class="space-y-3">
                             @csrf @method('PUT')
 
-                            <div class="grid grid-cols-2 gap-3">
+                            <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
                                 <label class="block text-xs font-bold text-gray-600 uppercase">
                                     Field Label
                                     <input required name="field_label" value="{{ $field->field_label }}" class="mt-1 w-full rounded-lg border px-3 py-2 text-sm">
@@ -98,7 +108,7 @@
                                 Required field
                             </label>
 
-                            <div class="flex gap-2">
+                            <div class="flex flex-col-reverse gap-2 sm:flex-row">
                                 <button class="rounded-lg bg-red-900 px-4 py-2 text-xs font-semibold text-white hover:bg-red-800">Save Field</button>
                                 <button type="button" onclick="toggleFieldEditor('field-editor-{{ $field->id }}')" class="rounded-lg border px-4 py-2 text-xs font-semibold hover:bg-gray-50">Cancel</button>
                             </div>
@@ -115,14 +125,14 @@
             <form id="add-field-form" method="POST" action="{{ route('admin.document-types.fields.add', $documentType) }}" class="space-y-3">
                 @csrf
 
-                <div class="grid grid-cols-2 gap-3">
+                <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
                     <label class="block text-xs font-bold text-gray-600 uppercase">
                         Field Label (display)
                         <input required name="field_label" placeholder="e.g. Student ID Number" class="mt-1 w-full rounded-lg border px-3 py-2 text-sm">
                     </label>
                 </div>
 
-                <div class="grid grid-cols-2 gap-3">
+                <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
                     <label class="block text-xs font-bold text-gray-600 uppercase">
                         Field Type
                         <select required name="field_type" class="field-type-select mt-1 w-full rounded-lg border px-3 py-2 text-sm">
@@ -154,7 +164,7 @@
                     Required field
                 </label>
 
-                <button class="rounded-lg bg-red-900 px-4 py-2 text-sm font-semibold text-white hover:bg-red-800">
+                <button class="w-full rounded-lg bg-red-900 px-4 py-2 text-sm font-semibold text-white hover:bg-red-800 sm:w-auto">
                     <i class="fa-solid fa-plus mr-1"></i> Add Field
                 </button>
             </form>

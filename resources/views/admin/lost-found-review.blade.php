@@ -166,10 +166,10 @@
                         </button>
                     </form>
                 @else
-                    <form method="POST" action="{{ route('admin.lost-found.archive.store', $item) }}" onsubmit="return confirm('Archive this lost-and-found item?')">
+                    <form id="archive-item-form" method="POST" action="{{ route('admin.lost-found.archive.store', $item) }}">
                         @csrf
                         @method('PATCH')
-                        <button class="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-xs font-bold text-gray-700 hover:bg-gray-50">
+                        <button type="button" onclick="openArchiveModal()" class="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-xs font-bold text-gray-700 hover:bg-gray-50">
                             <i class="fa-solid fa-box-archive mr-1"></i> ARCHIVE ITEM
                         </button>
                     </form>
@@ -178,12 +178,45 @@
         </div>
     </aside>
 </div>
+
+@unless($item->archived_at)
+    <div id="archive-confirm-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black bg-opacity-50 p-4" role="dialog" aria-modal="true" aria-labelledby="archive-confirm-modal-title">
+        <div class="w-full max-w-md rounded-xl bg-white p-6 shadow-lg">
+            <div class="text-center">
+                <div class="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-red-100">
+                    <i class="fa-solid fa-box-archive text-red-800"></i>
+                </div>
+                <h3 id="archive-confirm-modal-title" class="text-lg font-bold text-gray-900">Archive Item?</h3>
+                <p class="mt-2 text-sm text-gray-600">This item will move out of the active Lost & Found lists, but its record and image will stay saved.</p>
+            </div>
+
+            <div class="mt-5 grid grid-cols-2 gap-2">
+                <button type="button" onclick="closeArchiveModal()" class="rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-bold text-gray-700 hover:bg-gray-50">
+                    Cancel
+                </button>
+                <button type="submit" form="archive-item-form" class="rounded-lg bg-red-900 px-4 py-2.5 text-sm font-bold text-white hover:bg-red-800">
+                    Archive
+                </button>
+            </div>
+        </div>
+    </div>
+@endunless
 @endsection
 
 @push('scripts')
 <script>
     function closeSuccessModal() {
         document.getElementById('success-modal')?.remove();
+    }
+
+    function openArchiveModal() {
+        document.getElementById('archive-confirm-modal')?.classList.remove('hidden');
+        document.getElementById('archive-confirm-modal')?.classList.add('flex');
+    }
+
+    function closeArchiveModal() {
+        document.getElementById('archive-confirm-modal')?.classList.add('hidden');
+        document.getElementById('archive-confirm-modal')?.classList.remove('flex');
     }
 </script>
 @endpush

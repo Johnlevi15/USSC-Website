@@ -154,6 +154,16 @@ class LostFoundAdminReviewTest extends TestCase
         Storage::disk('public')->put('lost-found/blue-umbrella.jpg', 'umbrella image');
 
         $this->actingAs($admin, 'admin')
+            ->get(route('admin.lost-found.review', $item))
+            ->assertOk()
+            ->assertSee('id="archive-confirm-modal"', false)
+            ->assertSee('role="dialog"', false)
+            ->assertSeeText('Archive Item?')
+            ->assertSee('onclick="openArchiveModal()"', false)
+            ->assertDontSee('confirm(&#039;Archive this lost-and-found item?&#039;)', false)
+            ->assertDontSee("confirm('Archive this lost-and-found item?')", false);
+
+        $this->actingAs($admin, 'admin')
             ->followingRedirects()
             ->patch(route('admin.lost-found.archive.store', $item))
             ->assertOk()

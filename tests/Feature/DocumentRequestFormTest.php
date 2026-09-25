@@ -180,11 +180,23 @@ class DocumentRequestFormTest extends TestCase
             'is_active' => true,
         ]);
 
+        DocumentTypeField::create([
+            'document_type_id' => $documentType->id,
+            'field_name' => 'student_id_number',
+            'field_label' => 'Student ID Number',
+            'field_type' => 'text',
+            'is_required' => true,
+            'display_order' => 1,
+        ]);
+
         $this->actingAs($admin, 'admin')
             ->get(route('admin.document-types.edit', $documentType))
             ->assertOk()
             ->assertDontSee('name="field_name"', false)
             ->assertDontSeeText('Field Name (internal)')
+            ->assertSeeText('Student ID Number')
+            ->assertSeeText('Delete')
+            ->assertSee('inline-flex w-full items-center justify-center gap-1.5 rounded-lg bg-red-700', false)
             ->assertSeeText('Enter one option per line. Use "Other" to let users type a custom answer.');
     }
 

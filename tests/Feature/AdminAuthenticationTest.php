@@ -78,6 +78,31 @@ class AdminAuthenticationTest extends TestCase
         $this->assertStringContainsString('private', $cacheControl);
     }
 
+    public function test_admin_layout_renders_burger_navigation_with_portal_and_logout_actions(): void
+    {
+        $admin = Admin::create([
+            'name' => 'Portal Administrator',
+            'email' => 'admin@example.test',
+            'password_hash' => Hash::make('secure-password'),
+        ]);
+
+        $this->actingAs($admin, 'admin')
+            ->get(route('admin.dashboard'))
+            ->assertOk()
+            ->assertSee('id="admin-menu-toggle"', false)
+            ->assertSee('aria-controls="admin-menu-panel"', false)
+            ->assertSee('id="admin-menu-panel"', false)
+            ->assertSeeText('Dashboard')
+            ->assertSeeText('Document Requests')
+            ->assertSeeText('Document Types')
+            ->assertSeeText('Lost & Found')
+            ->assertSeeText('Events')
+            ->assertSeeText('Activity Logs')
+            ->assertSeeText('View portal')
+            ->assertSeeText('Logout')
+            ->assertSee(route('admin-logout'), false);
+    }
+
     public function test_invalid_admin_login_shows_a_generic_error_without_remaining_attempts(): void
     {
         Admin::create([

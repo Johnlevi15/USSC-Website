@@ -27,7 +27,7 @@
                 <input required type="date" name="event_date" value="{{ old('event_date') }}" class="mt-1 w-full rounded-lg border px-3 py-2 text-sm">
             </label>
 
-            <div class="grid grid-cols-2 gap-3">
+            <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <label class="block text-xs font-bold uppercase text-gray-600">
                     Starts
                     <input required type="time" name="start_time" value="{{ old('start_time') }}" class="mt-1 w-full rounded-lg border px-3 py-2 text-sm">
@@ -75,9 +75,9 @@
                             </p>
                         </div>
 
-                        <div class="flex shrink-0 items-center gap-2">
+                        <div class="grid w-full grid-cols-2 gap-2 sm:flex sm:w-auto sm:shrink-0 sm:items-center">
                             <a href="{{ route('admin.events.edit', $event) }}"
-                               class="inline-flex items-center gap-1.5 rounded-lg border border-gray-300 bg-white px-3 py-2 text-xs font-bold text-gray-700 hover:bg-gray-50">
+                               class="inline-flex items-center justify-center gap-1.5 rounded-lg border border-gray-300 bg-white px-3 py-2 text-xs font-bold text-gray-700 hover:bg-gray-50">
                                 <i class="fa-solid fa-pen-to-square"></i>
                                 Edit
                             </a>
@@ -88,7 +88,7 @@
                                 @csrf
                                 @method('DELETE')
                                 <button type="submit"
-                                        class="inline-flex items-center gap-1.5 rounded-lg bg-red-700 px-3 py-2 text-xs font-bold text-white hover:bg-red-800">
+                                        class="inline-flex w-full items-center justify-center gap-1.5 rounded-lg bg-red-700 px-3 py-2 text-xs font-bold text-white hover:bg-red-800">
                                     <i class="fa-solid fa-trash"></i>
                                     Delete
                                 </button>
