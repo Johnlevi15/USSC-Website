@@ -131,4 +131,32 @@ class LostFoundItemFormTest extends TestCase
 
         $this->assertStringContainsString('umbrella image', $response->streamedContent());
     }
+
+    public function test_lost_found_gallery_has_view_more_pagination_controls(): void
+    {
+        $user = User::create([
+            'name' => 'Taylor Student',
+            'email' => 'taylor@example.test',
+        ]);
+
+        foreach (range(1, 11) as $index) {
+            LostFoundItem::create([
+                'posted_by' => $user->id,
+                'item_name' => "Blue Umbrella {$index}",
+                'category' => 'Accessories',
+                'description' => 'Found near the main lobby.',
+                'status' => 'found',
+                'approval_status' => 'approved',
+                'submitted_at' => now(),
+                'place' => 'Main Lobby',
+            ]);
+        }
+
+        $this->get(route('lost-found'))
+            ->assertOk()
+            ->assertSee('id="view-more"', false)
+            ->assertSee('const pageSize = 10;', false)
+            ->assertSee('visibleLimits[active] += pageSize;', false)
+            ->assertSeeText('View More');
+    }
 }

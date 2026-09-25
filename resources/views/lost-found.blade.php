@@ -61,11 +61,22 @@
             </article>
         @endforeach
     </div>
+    <div id="gallery-pagination" class="hidden text-center">
+        <button type="button" id="view-more" onclick="viewMoreItems()" class="rounded-lg border border-red-900 px-4 py-2 text-xs font-bold text-red-900 hover:bg-red-50">
+            View More
+        </button>
+    </div>
     <p id="empty" class="hidden bg-white rounded-xl p-8 text-center border text-sm text-gray-500">No items found.</p>
 </div>
 @endsection
 @push('scripts')
     <script>
+        const pageSize = 10;
+        const visibleLimits = {
+            ALL: pageSize,
+            LOST: pageSize,
+            FOUND: pageSize,
+        };
         let active = 'ALL';
 
         function setFilter(value) {
@@ -78,20 +89,28 @@
             filterItems();
         }
 
+        function viewMoreItems() {
+            visibleLimits[active] += pageSize;
+            filterItems();
+        }
+
         function filterItems() {
             const query = document.getElementById('search').value.toLowerCase();
-            let count = 0;
-
-            document.querySelectorAll('.item').forEach((item) => {
-                const show = (active === 'ALL' || item.dataset.status === active) && item.dataset.text.includes(query);
-                item.classList.toggle('hidden', !show);
-
-                if (show) {
-                    count++;
-                }
+            const items = Array.from(document.querySelectorAll('.item'));
+            const matches = items.filter((item) => {
+                return (active === 'ALL' || item.dataset.status === active) && item.dataset.text.includes(query);
             });
 
-            document.getElementById('empty').classList.toggle('hidden', count > 0);
+            items.forEach((item) => item.classList.add('hidden'));
+
+            matches.slice(0, visibleLimits[active]).forEach((item) => {
+                item.classList.remove('hidden');
+            });
+
+            document.getElementById('empty').classList.toggle('hidden', matches.length > 0);
+            document.getElementById('gallery-pagination').classList.toggle('hidden', matches.length <= visibleLimits[active]);
         }
+
+        filterItems();
     </script>
 @endpush
