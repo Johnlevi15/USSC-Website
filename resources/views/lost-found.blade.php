@@ -12,14 +12,32 @@
             id="report-toggle"
             onclick="toggleReportForm()"
             aria-controls="report-form"
-            aria-expanded="false"
-            class="px-3 py-1.5 bg-red-900 text-white text-xs rounded-lg font-bold"
+            aria-expanded="{{ $errors->any() ? 'true' : 'false' }}"
+            @class([
+                'px-3 py-1.5 bg-red-900 text-white text-xs rounded-lg font-bold',
+                'hidden' => $errors->any(),
+            ])
         >
             REPORT AN ITEM
         </button>
     </div>
 
-    <div id="report-form" class="hidden">
+    @if(session('success'))
+        <div class="rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm font-semibold text-green-800">{{ session('success') }}</div>
+    @endif
+
+    @if($errors->any())
+        <div class="rounded-lg border border-red-200 bg-red-50 p-4">
+            <p class="mb-2 text-sm font-bold text-red-800">Please check your item report:</p>
+            <ul class="list-disc space-y-1 pl-5 text-sm text-red-700">
+                @foreach($errors->all() as $error)
+                    <li>{{ $error }}</li>
+                @endforeach
+            </ul>
+        </div>
+    @endif
+
+    <div id="report-form" @class(['hidden' => ! $errors->any()])>
         @include('partials.report-item-form')
     </div>
 
@@ -31,10 +49,6 @@
             <button onclick="setFilter('FOUND')" class="filter px-3 py-1 rounded-md text-gray-600" data-filter="FOUND">FOUND</button>
         </div>
     </div>
-
-    @if(session('success'))
-        <div class="bg-green-50 border border-green-200 text-green-800 rounded-lg px-4 py-3 text-sm">{{ session('success') }}</div>
-    @endif
 
     <div id="gallery" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
         @include('partials.lost-found-gallery-items', ['items' => $items])

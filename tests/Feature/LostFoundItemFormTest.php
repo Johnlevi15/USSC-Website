@@ -8,7 +8,6 @@ use App\Models\User;
 use Illuminate\Foundation\Testing\LazilyRefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
-use League\Flysystem\UnableToWriteFile;
 use Tests\TestCase;
 
 class LostFoundItemFormTest extends TestCase
@@ -36,6 +35,45 @@ class LostFoundItemFormTest extends TestCase
             'item_name' => 'Blue Umbrella',
         ]);
         Storage::disk('public')->assertDirectoryEmpty('/');
+    }
+
+    public function test_lost_found_page_displays_item_report_validation_errors_and_keeps_form_open(): void
+    {
+        $this->from('/lost-found')->post('/report-item', [
+            'full_name' => '',
+            'email' => 'not-an-email',
+            'item_name' => '',
+            'category' => '',
+            'description' => '',
+            'status' => 'found',
+            'place' => '',
+        ])->assertRedirect('/lost-found');
+
+        $this->get('/lost-found')
+            ->assertOk()
+            ->assertSeeText('Please check your item report:')
+            ->assertSeeText('The full name field is required.')
+            ->assertSee('id="report-form"', false)
+            ->assertDontSee('id="report-form" class="hidden"', false);
+    }
+
+    public function test_lost_found_page_displays_item_report_success_message(): void
+    {
+        Storage::fake('public');
+
+        $this->post('/report-item', [
+            'full_name' => 'Taylor Student',
+            'email' => 'taylor@example.test',
+            'item_name' => 'Blue Umbrella',
+            'category' => 'Accessories',
+            'description' => 'Found near the main lobby.',
+            'status' => 'found',
+            'place' => 'Main Lobby',
+        ])->assertRedirect(route('lost-found'));
+
+        $this->get(route('lost-found'))
+            ->assertOk()
+            ->assertSeeText('Your item report was submitted for admin approval.');
     }
 
     public function test_submitted_lost_found_image_can_be_streamed_for_admin_review(): void
@@ -100,9 +138,7 @@ class LostFoundItemFormTest extends TestCase
 
     public function test_item_report_shows_validation_error_when_image_storage_fails(): void
     {
-        Storage::shouldReceive('disk')
-            ->with('public')
-            ->andThrow(UnableToWriteFile::atLocation('lost-found/blue-umbrella.jpg'));
+        config(['filesystems.uploads.lost_found' => 'missing-disk']);
 
         $this->from('/lost-found')->post('/report-item', [
             'full_name' => 'Taylor Student',
