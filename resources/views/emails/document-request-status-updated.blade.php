@@ -24,7 +24,7 @@
                 <table role="presentation" style="width:100%;border-collapse:collapse;">
                     <tr>
                         <td style="width:52px;padding:0 14px 0 0;vertical-align:middle;">
-                            <img src="{{ asset('logo.png') }}" alt="USSC Logo" width="42" height="42" style="display:block;width:42px;height:42px;object-fit:contain;">
+                            <img src="{{ asset('logo1.png') }}" alt="USSC Logo" width="42" height="42" style="display:block;width:42px;height:42px;object-fit:contain;">
                         </td>
                         <td style="padding:0;vertical-align:middle;">
                             <h1 style="margin:0;font-size:20px;">USSC Document Request Update</h1>
