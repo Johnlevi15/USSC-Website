@@ -19,6 +19,7 @@ use Illuminate\Support\Facades\Route;
 Route::get('/', [EventController::class, 'calendar'])->name('home');
 
 Route::get('/lost-found', [LostFoundItemController::class, 'browse'])->name('lost-found');
+Route::get('/lost-found/items', [LostFoundItemController::class, 'galleryItems'])->name('lost-found.items');
 Route::get('/lost-found-items/{lostFoundItem}/image', [LostFoundItemController::class, 'image'])->name('lost-found-items.image');
 Route::get('/report-item', [LostFoundItemController::class, 'create'])->name('report-item');
 Route::post('/report-item', [LostFoundItemController::class, 'store'])
@@ -76,11 +77,13 @@ Route::middleware(['auth:admin', 'admin', 'admin.no-cache'])->group(function ():
     });
 
     Route::get('/admin/document-requests', [AdminDashboardController::class, 'documents'])->name('admin.documents');
+    Route::get('/admin/document-requests/live', [AdminDashboardController::class, 'liveDocuments'])->name('admin.documents.live');
     Route::get('/admin/document-requests/{documentRequest}/attachments/{fieldName}', [AdminDashboardController::class, 'viewDocumentAttachment'])->name('admin.documents.attachments.show');
     Route::get('/admin/document-requests/{documentRequest}', [AdminDashboardController::class, 'reviewDocument'])->name('admin.documents.review');
     Route::patch('/admin/document-requests/{documentRequest}', [AdminDashboardController::class, 'updateDocument'])->name('admin.documents.update');
 
     Route::get('/admin/lost-found', [AdminDashboardController::class, 'lostFound'])->name('admin.lost-found');
+    Route::get('/admin/lost-found/live', [AdminDashboardController::class, 'liveLostFound'])->name('admin.lost-found.live');
     Route::get('/admin/lost-found/{lostFoundItem}', [AdminDashboardController::class, 'reviewLostFound'])->name('admin.lost-found.review');
     Route::patch('/admin/lost-found/{lostFoundItem}', [AdminDashboardController::class, 'updateLostFound'])->name('admin.lost-found.update');
 

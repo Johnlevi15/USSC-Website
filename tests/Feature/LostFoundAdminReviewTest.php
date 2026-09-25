@@ -63,4 +63,48 @@ class LostFoundAdminReviewTest extends TestCase
 
         $this->assertStringContainsString('umbrella image', $response->streamedContent());
     }
+
+    public function test_admin_lost_found_live_endpoint_returns_pending_and_processed_items(): void
+    {
+        $admin = Admin::create([
+            'name' => 'Portal Administrator',
+            'email' => 'admin@example.test',
+            'password_hash' => 'not-used',
+        ]);
+
+        $user = User::create([
+            'name' => 'Taylor Student',
+            'email' => 'taylor@example.test',
+        ]);
+
+        LostFoundItem::create([
+            'posted_by' => $user->id,
+            'item_name' => 'Blue Umbrella',
+            'category' => 'Personal Item',
+            'description' => 'Found near the student center lobby.',
+            'status' => 'found',
+            'approval_status' => 'pending',
+            'submitted_at' => now(),
+            'place' => 'Student Center',
+        ]);
+
+        LostFoundItem::create([
+            'posted_by' => $user->id,
+            'item_name' => 'Red Notebook',
+            'category' => 'School Supply',
+            'description' => 'Found near the library.',
+            'status' => 'found',
+            'approval_status' => 'approved',
+            'submitted_at' => now(),
+            'place' => 'Library',
+        ]);
+
+        $this->actingAs($admin, 'admin')
+            ->getJson(route('admin.lost-found.live'))
+            ->assertOk()
+            ->assertJsonPath('pending_count', 1)
+            ->assertJsonPath('processed_count', 1)
+            ->assertSee('Blue Umbrella')
+            ->assertSee('Red Notebook');
+    }
 }

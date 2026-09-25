@@ -132,6 +132,42 @@ class LostFoundItemFormTest extends TestCase
         $this->assertStringContainsString('umbrella image', $response->streamedContent());
     }
 
+    public function test_lost_found_gallery_items_endpoint_returns_rendered_items(): void
+    {
+        $user = User::create([
+            'name' => 'Taylor Student',
+            'email' => 'taylor@example.test',
+        ]);
+
+        LostFoundItem::create([
+            'posted_by' => $user->id,
+            'item_name' => 'Blue Umbrella',
+            'category' => 'Accessories',
+            'description' => 'Found near the main lobby.',
+            'status' => 'found',
+            'approval_status' => 'approved',
+            'submitted_at' => now(),
+            'place' => 'Main Lobby',
+        ]);
+
+        LostFoundItem::create([
+            'posted_by' => $user->id,
+            'item_name' => 'Red Notebook',
+            'category' => 'School Supply',
+            'description' => 'Waiting for approval.',
+            'status' => 'lost',
+            'approval_status' => 'pending',
+            'submitted_at' => now(),
+            'place' => 'Library',
+        ]);
+
+        $this->getJson(route('lost-found.items'))
+            ->assertOk()
+            ->assertJsonPath('count', 1)
+            ->assertSee('Blue Umbrella')
+            ->assertDontSee('Red Notebook');
+    }
+
     public function test_lost_found_gallery_has_view_more_pagination_controls(): void
     {
         $user = User::create([

@@ -9,7 +9,10 @@ use App\Models\DocumentRequest;
 use App\Models\EmailNotification;
 use App\Models\Event;
 use App\Models\LostFoundItem;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
@@ -44,9 +47,17 @@ class AdminDashboardController extends Controller
     public function documents(): View
     {
         return view('admin.documents', [
-            'requests' => DocumentRequest::with(['user', 'fields', 'reviewer', 'documentType'])
-                ->latest('request_id')
-                ->paginate(15),
+            'requests' => $this->latestDocumentRequests()->paginate(15),
+        ]);
+    }
+
+    public function liveDocuments(): JsonResponse
+    {
+        $requests = $this->latestDocumentRequests()->limit(15)->get();
+
+        return response()->json([
+            'html' => view('admin.partials.document-request-rows', compact('requests'))->render(),
+            'count' => $requests->count(),
         ]);
     }
 
@@ -95,14 +106,25 @@ class AdminDashboardController extends Controller
     public function lostFound(): View
     {
         return view('admin.lost-found', [
-            'pendingItems' => LostFoundItem::with(['poster', 'reviewer'])
-                ->where('approval_status', 'pending')
-                ->latest('item_id')
-                ->get(),
-            'processedItems' => LostFoundItem::with(['poster', 'reviewer'])
-                ->whereIn('approval_status', ['approved', 'rejected'])
-                ->latest('item_id')
-                ->get(),
+            'pendingItems' => $this->pendingLostFoundItems(),
+            'processedItems' => $this->processedLostFoundItems(),
+        ]);
+    }
+
+    public function liveLostFound(): JsonResponse
+    {
+        $pendingItems = $this->pendingLostFoundItems();
+        $processedItems = $this->processedLostFoundItems();
+
+        return response()->json([
+            'pending_html' => $pendingItems->isNotEmpty()
+                ? $pendingItems->map(fn (LostFoundItem $item): string => view('admin.partials.lost-found-item', compact('item'))->render())->implode('')
+                : '<p class="col-span-full rounded-xl border bg-white p-10 text-center text-sm text-gray-500">No pending reports.</p>',
+            'processed_html' => $processedItems->isNotEmpty()
+                ? $processedItems->map(fn (LostFoundItem $item): string => view('admin.partials.lost-found-processed-item', compact('item'))->render())->implode('')
+                : '<p class="rounded-xl border bg-white p-10 text-center text-sm text-gray-500">No approved or rejected reports yet.</p>',
+            'pending_count' => $pendingItems->count(),
+            'processed_count' => $processedItems->count(),
         ]);
     }
 
@@ -329,6 +351,28 @@ class AdminDashboardController extends Controller
         }
 
         return $configuredDisk;
+    }
+
+    private function latestDocumentRequests(): Builder
+    {
+        return DocumentRequest::with(['user', 'fields', 'reviewer', 'documentType'])
+            ->latest('request_id');
+    }
+
+    private function pendingLostFoundItems(): Collection
+    {
+        return LostFoundItem::with(['poster', 'reviewer'])
+            ->where('approval_status', 'pending')
+            ->latest('item_id')
+            ->get();
+    }
+
+    private function processedLostFoundItems(): Collection
+    {
+        return LostFoundItem::with(['poster', 'reviewer'])
+            ->whereIn('approval_status', ['approved', 'rejected'])
+            ->latest('item_id')
+            ->get();
     }
 
     private function adminId(Request $request): int

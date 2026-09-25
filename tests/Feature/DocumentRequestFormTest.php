@@ -269,6 +269,40 @@ class DocumentRequestFormTest extends TestCase
         ]);
     }
 
+    public function test_admin_document_requests_live_endpoint_returns_latest_rows(): void
+    {
+        $admin = Admin::create([
+            'name' => 'Portal Administrator',
+            'email' => 'admin@example.test',
+            'password_hash' => 'not-used',
+        ]);
+
+        $user = User::create([
+            'name' => 'Taylor Student',
+            'email' => 'taylor@example.test',
+        ]);
+
+        $documentType = DocumentType::create([
+            'name' => 'Clearance Request',
+            'description' => 'Clearance form',
+            'is_active' => true,
+        ]);
+
+        $documentRequest = DocumentRequest::create([
+            'user_id' => $user->id,
+            'document_type_id' => $documentType->id,
+            'status' => 'pending',
+        ]);
+
+        $this->actingAs($admin, 'admin')
+            ->getJson(route('admin.documents.live'))
+            ->assertOk()
+            ->assertJsonPath('count', 1)
+            ->assertSee('Taylor Student')
+            ->assertSee('Clearance Request')
+            ->assertSee("Request #{$documentRequest->request_id}");
+    }
+
     public function test_admin_can_delete_an_unused_document_type(): void
     {
         $admin = Admin::create([

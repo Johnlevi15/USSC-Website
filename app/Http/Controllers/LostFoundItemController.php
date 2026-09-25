@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\LostFoundItem;
 use App\Models\User;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -18,10 +19,17 @@ class LostFoundItemController extends Controller
     public function browse(): View
     {
         return view('lost-found', [
-            'items' => LostFoundItem::with('poster')
-                ->where('approval_status', 'approved')
-                ->latest('item_id')
-                ->get(),
+            'items' => $this->approvedItems(),
+        ]);
+    }
+
+    public function galleryItems(): JsonResponse
+    {
+        $items = $this->approvedItems();
+
+        return response()->json([
+            'html' => view('partials.lost-found-gallery-items', compact('items'))->render(),
+            'count' => $items->count(),
         ]);
     }
 
@@ -179,6 +187,14 @@ class LostFoundItemController extends Controller
     private function lostFoundDisk(): string
     {
         return (string) config('filesystems.uploads.lost_found', 'public');
+    }
+
+    private function approvedItems(): Collection
+    {
+        return LostFoundItem::with('poster')
+            ->where('approval_status', 'approved')
+            ->latest('item_id')
+            ->get();
     }
 
     private function storeUploadedImage(Request $request): ?string
