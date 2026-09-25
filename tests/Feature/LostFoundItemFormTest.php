@@ -224,11 +224,24 @@ class LostFoundItemFormTest extends TestCase
             'place' => 'Library',
         ]);
 
+        LostFoundItem::create([
+            'posted_by' => $user->id,
+            'item_name' => 'Archived Jacket',
+            'category' => 'Clothing',
+            'description' => 'Archived item.',
+            'status' => 'found',
+            'approval_status' => 'approved',
+            'submitted_at' => now(),
+            'place' => 'Gym',
+            'archived_at' => now(),
+        ]);
+
         $this->getJson(route('lost-found.items'))
             ->assertOk()
             ->assertJsonPath('count', 1)
             ->assertSee('Blue Umbrella')
-            ->assertDontSee('Red Notebook');
+            ->assertDontSee('Red Notebook')
+            ->assertDontSee('Archived Jacket');
     }
 
     public function test_lost_found_gallery_has_view_more_pagination_controls(): void

@@ -200,6 +200,7 @@ class LostFoundItemController extends Controller
     {
         return LostFoundItem::with('poster')
             ->where('approval_status', 'approved')
+            ->whereNull('archived_at')
             ->latest('item_id')
             ->get();
     }

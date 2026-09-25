@@ -91,6 +91,9 @@ Route::middleware(['auth:admin', 'admin', 'admin.no-cache'])->group(function ():
 
     Route::get('/admin/lost-found', [AdminDashboardController::class, 'lostFound'])->name('admin.lost-found');
     Route::get('/admin/lost-found/live', [AdminDashboardController::class, 'liveLostFound'])->name('admin.lost-found.live');
+    Route::get('/admin/lost-found/archive', [AdminDashboardController::class, 'archivedLostFound'])->name('admin.lost-found.archive');
+    Route::patch('/admin/lost-found/{lostFoundItem}/archive', [AdminDashboardController::class, 'archiveLostFound'])->name('admin.lost-found.archive.store');
+    Route::patch('/admin/lost-found/{lostFoundItem}/restore', [AdminDashboardController::class, 'restoreLostFound'])->name('admin.lost-found.restore');
     Route::get('/admin/lost-found/{lostFoundItem}', [AdminDashboardController::class, 'reviewLostFound'])->name('admin.lost-found.review');
     Route::patch('/admin/lost-found/{lostFoundItem}', [AdminDashboardController::class, 'updateLostFound'])->name('admin.lost-found.update');
 

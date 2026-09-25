@@ -12,6 +12,11 @@
     </div>
 
     <div class="flex flex-wrap gap-2">
+        @if($item->archived_at)
+            <span class="w-fit rounded-full bg-gray-900 px-3 py-1.5 text-xs font-bold uppercase text-white">
+                archived
+            </span>
+        @endif
         <span @class([
             'w-fit rounded-full px-3 py-1.5 text-xs font-bold uppercase',
             'bg-red-100 text-red-800' => $item->status === 'lost',
@@ -64,6 +69,16 @@
                     <p class="text-[11px] font-bold uppercase tracking-wider text-gray-400">Reviewed By</p>
                     <p class="mt-1 text-sm text-gray-700">{{ $item->reviewer?->name ?? 'Not reviewed yet' }}</p>
                 </div>
+                @if($item->archived_at)
+                    <div>
+                        <p class="text-[11px] font-bold uppercase tracking-wider text-gray-400">Archived</p>
+                        <p class="mt-1 text-sm text-gray-700">{{ $item->archived_at->format('F j, Y g:i A') }}</p>
+                    </div>
+                    <div>
+                        <p class="text-[11px] font-bold uppercase tracking-wider text-gray-400">Archived By</p>
+                        <p class="mt-1 text-sm text-gray-700">{{ $item->archiver?->name ?? 'Unknown admin' }}</p>
+                    </div>
+                @endif
             </div>
         </section>
 
@@ -93,6 +108,13 @@
                     <p class="mt-2 whitespace-pre-line break-words text-sm text-gray-900">{{ $item->description }}</p>
                 </div>
 
+                @if(filled($item->admin_remarks))
+                    <div>
+                        <p class="text-xs font-bold uppercase tracking-wide text-gray-500">Admin Remarks</p>
+                        <p class="mt-2 whitespace-pre-line break-words text-sm text-gray-900">{{ $item->admin_remarks }}</p>
+                    </div>
+                @endif
+
                 @if($item->imageUrl())
                     <div>
                         <p class="text-xs font-bold uppercase tracking-wide text-gray-500">Submitted Image</p>
@@ -115,6 +137,26 @@
             </div>
 
             @include('admin.partials.lost-found-item-form', ['item' => $item, 'reviewPage' => true])
+
+            <div class="border-t p-5">
+                @if($item->archived_at)
+                    <form method="POST" action="{{ route('admin.lost-found.restore', $item) }}">
+                        @csrf
+                        @method('PATCH')
+                        <button class="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-xs font-bold text-gray-700 hover:bg-gray-50">
+                            <i class="fa-solid fa-rotate-left mr-1"></i> RESTORE ITEM
+                        </button>
+                    </form>
+                @else
+                    <form method="POST" action="{{ route('admin.lost-found.archive.store', $item) }}" onsubmit="return confirm('Archive this lost-and-found item?')">
+                        @csrf
+                        @method('PATCH')
+                        <button class="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-xs font-bold text-gray-700 hover:bg-gray-50">
+                            <i class="fa-solid fa-box-archive mr-1"></i> ARCHIVE ITEM
+                        </button>
+                    </form>
+                @endif
+            </div>
         </div>
     </aside>
 </div>

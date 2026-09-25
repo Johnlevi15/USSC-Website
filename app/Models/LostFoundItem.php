@@ -13,11 +13,14 @@ class LostFoundItem extends Model
 
     public $timestamps = false;
 
-    protected $fillable = ['posted_by', 'item_name', 'category', 'description', 'image_path', 'status', 'approval_status', 'submitted_at', 'place', 'reviewed_by'];
+    protected $fillable = ['posted_by', 'item_name', 'category', 'description', 'image_path', 'status', 'approval_status', 'admin_remarks', 'submitted_at', 'place', 'reviewed_by', 'archived_at', 'archived_by'];
 
     protected function casts(): array
     {
-        return ['submitted_at' => 'datetime'];
+        return [
+            'submitted_at' => 'datetime',
+            'archived_at' => 'datetime',
+        ];
     }
 
     public function imageUrl(): ?string
@@ -37,5 +40,10 @@ class LostFoundItem extends Model
     public function reviewer(): BelongsTo
     {
         return $this->belongsTo(Admin::class, 'reviewed_by', 'admin_id');
+    }
+
+    public function archiver(): BelongsTo
+    {
+        return $this->belongsTo(Admin::class, 'archived_by', 'admin_id');
     }
 }

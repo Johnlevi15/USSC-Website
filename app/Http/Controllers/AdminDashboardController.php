@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Mail\DocumentRequestStatusUpdated;
+use App\Mail\LostFoundItemStatusUpdated;
 use App\Models\Admin;
 use App\Models\AdminActivityLog;
 use App\Models\DocumentRequest;
@@ -32,10 +33,11 @@ class AdminDashboardController extends Controller
             'readyDocuments' => DocumentRequest::where('status', 'ready')->count(),
             'unclaimedItems' => LostFoundItem::where('approval_status', 'approved')
                 ->whereIn('status', ['lost', 'found'])
+                ->whereNull('archived_at')
                 ->count(),
             'monthlyEvents' => Event::whereBetween('event_date', [now()->startOfMonth(), now()->endOfMonth()])->count(),
             'recentDocuments' => DocumentRequest::with(['user', 'fields', 'documentType'])->latest('request_id')->limit(5)->get(),
-            'recentItems' => LostFoundItem::with('poster')->latest('item_id')->limit(5)->get(),
+            'recentItems' => LostFoundItem::with('poster')->whereNull('archived_at')->latest('item_id')->limit(5)->get(),
             'upcomingEvents' => Event::whereDate('event_date', '>=', today())
                 ->orderBy('event_date')
                 ->orderBy('start_time')
@@ -111,6 +113,17 @@ class AdminDashboardController extends Controller
         ]);
     }
 
+    public function archivedLostFound(): View
+    {
+        return view('admin.lost-found-archive', [
+            'items' => LostFoundItem::with(['poster', 'reviewer', 'archiver'])
+                ->whereNotNull('archived_at')
+                ->latest('archived_at')
+                ->latest('item_id')
+                ->get(),
+        ]);
+    }
+
     public function liveLostFound(): JsonResponse
     {
         $pendingItems = $this->pendingLostFoundItems();
@@ -130,7 +143,7 @@ class AdminDashboardController extends Controller
 
     public function reviewLostFound(LostFoundItem $lostFoundItem): View
     {
-        $lostFoundItem->load(['poster', 'reviewer']);
+        $lostFoundItem->load(['poster', 'reviewer', 'archiver']);
 
         return view('admin.lost-found-review', [
             'item' => $lostFoundItem,
@@ -252,6 +265,8 @@ class AdminDashboardController extends Controller
         $validated = $request->validate([
             'approval_status' => ['required', 'in:approved,rejected,pending'],
             'status' => ['required', 'in:lost,found,claimed'],
+            'admin_remarks' => ['nullable', 'string', 'max:2000'],
+            'notify_student' => ['sometimes', 'boolean'],
         ]);
 
         if ($validated['status'] === 'claimed' && ! in_array($lostFoundItem->status, ['found', 'claimed'], true)) {
@@ -260,15 +275,74 @@ class AdminDashboardController extends Controller
             ]);
         }
 
+        $adminId = $this->adminId($request);
+        $oldStatus = $lostFoundItem->status;
+
         $lostFoundItem->update([
             'approval_status' => $validated['approval_status'],
             'status' => $validated['status'],
-            'reviewed_by' => $this->adminId($request),
+            'admin_remarks' => filled($validated['admin_remarks'] ?? null)
+                ? trim($validated['admin_remarks'])
+                : null,
+            'reviewed_by' => $adminId,
         ]);
 
         $this->record($request, 'lost_found_reviewed', "Updated item #{$lostFoundItem->item_id}: approval {$validated['approval_status']}, state {$validated['status']}.", $lostFoundItem);
 
-        return redirect()->route('admin.lost-found.review', $lostFoundItem)->with('success', 'Lost-and-found item status updated.');
+        $message = 'Lost-and-found item status updated.';
+
+        if ($request->boolean('notify_student')) {
+            $lostFoundItem->load('poster');
+            $recipientEmail = $lostFoundItem->poster?->email;
+
+            if (blank($recipientEmail)) {
+                $message .= ' The update was saved, but the reporter has no email address to notify.';
+            } else {
+                try {
+                    Mail::to($recipientEmail)
+                        ->send(new LostFoundItemStatusUpdated($lostFoundItem, $oldStatus));
+
+                    $this->record(
+                        $request,
+                        'lost_found_notification_sent',
+                        "Sent a status update for lost-and-found item #{$lostFoundItem->item_id} to {$recipientEmail}.",
+                        $lostFoundItem,
+                    );
+
+                    $message .= ' Student notification sent.';
+                } catch (Throwable $exception) {
+                    report($exception);
+
+                    $message .= ' The update was saved, but the email notification could not be sent.';
+                }
+            }
+        }
+
+        return redirect()->route('admin.lost-found.review', $lostFoundItem)->with('success', $message);
+    }
+
+    public function archiveLostFound(Request $request, LostFoundItem $lostFoundItem): RedirectResponse
+    {
+        $lostFoundItem->update([
+            'archived_at' => now(),
+            'archived_by' => $this->adminId($request),
+        ]);
+
+        $this->record($request, 'lost_found_archived', "Archived lost-and-found item #{$lostFoundItem->item_id}.", $lostFoundItem);
+
+        return redirect()->route('admin.lost-found')->with('success', 'Lost-and-found item archived.');
+    }
+
+    public function restoreLostFound(Request $request, LostFoundItem $lostFoundItem): RedirectResponse
+    {
+        $lostFoundItem->update([
+            'archived_at' => null,
+            'archived_by' => null,
+        ]);
+
+        $this->record($request, 'lost_found_restored', "Restored lost-and-found item #{$lostFoundItem->item_id}.", $lostFoundItem);
+
+        return redirect()->route('admin.lost-found.archive')->with('success', 'Lost-and-found item restored.');
     }
 
     public function storeEvent(Request $request): RedirectResponse
@@ -363,6 +437,7 @@ class AdminDashboardController extends Controller
     {
         return LostFoundItem::with(['poster', 'reviewer'])
             ->where('approval_status', 'pending')
+            ->whereNull('archived_at')
             ->latest('item_id')
             ->get();
     }
@@ -371,6 +446,7 @@ class AdminDashboardController extends Controller
     {
         return LostFoundItem::with(['poster', 'reviewer'])
             ->whereIn('approval_status', ['approved', 'rejected'])
+            ->whereNull('archived_at')
             ->latest('item_id')
             ->get();
     }

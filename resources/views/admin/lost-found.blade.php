@@ -6,6 +6,19 @@
     <p class="text-sm text-gray-500">Review pending reports, then manage approved or rejected items separately.</p>
 </div>
 
+@if(session('success'))
+    <div class="rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">
+        {{ session('success') }}
+    </div>
+@endif
+
+<div class="flex justify-end">
+    <a href="{{ route('admin.lost-found.archive') }}" class="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-xs font-bold text-gray-700 hover:bg-gray-50">
+        <i class="fa-solid fa-box-archive"></i>
+        Archive
+    </a>
+</div>
+
 <section class="space-y-4">
     <div class="flex items-center justify-between">
         <div>

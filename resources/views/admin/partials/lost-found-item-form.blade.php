@@ -23,5 +23,26 @@
         </select>
     </div>
 
+    <div @class([
+        'sm:col-span-3' => empty($reviewPage),
+    ])>
+        <label for="admin_remarks" class="mb-1.5 block text-xs font-bold uppercase tracking-wide text-gray-600">Admin Remarks</label>
+        <textarea
+            id="admin_remarks"
+            name="admin_remarks"
+            rows="{{ ! empty($reviewPage) ? 4 : 2 }}"
+            class="w-full rounded-lg border px-2 py-2 text-xs"
+            placeholder="Optional note for records or email notification"
+        >{{ old('admin_remarks', $item->admin_remarks) }}</textarea>
+    </div>
+
+    <label @class([
+        'flex items-center gap-2 text-xs text-gray-600' => true,
+        'sm:col-span-3' => empty($reviewPage),
+    ])>
+        <input type="checkbox" name="notify_student" value="1" @checked(old('notify_student')) class="rounded border-gray-300 text-red-900 focus:ring-red-900">
+        Notify student by email
+    </label>
+
     <button class="rounded-lg bg-red-900 px-4 py-2 text-xs font-bold text-white hover:bg-red-800">Save Review</button>
 </form>
