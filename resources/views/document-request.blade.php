@@ -101,9 +101,6 @@ document.getElementById('document_type').addEventListener('change', async functi
         const fields = await response.json();
 
         fields.forEach(field => {
-        if (['full_name', 'email'].includes(field.field_name)) {
-    return;
-}
             const wrapper = document.createElement(field.field_type === 'checkbox' ? 'div' : 'label');
             wrapper.className = 'block text-xs font-bold text-gray-600 uppercase';
 

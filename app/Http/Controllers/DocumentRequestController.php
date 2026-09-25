@@ -9,6 +9,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
@@ -29,11 +30,30 @@ class DocumentRequestController extends Controller
             abort(404);
         }
 
+        $baseFields = collect([
+            [
+                'field_name' => 'full_name',
+                'field_label' => 'Full Name',
+                'field_type' => 'text',
+                'field_options' => null,
+                'is_required' => true,
+                'validation_rules' => null,
+            ],
+            [
+                'field_name' => 'email',
+                'field_label' => 'Email Address',
+                'field_type' => 'email',
+                'field_options' => null,
+                'is_required' => true,
+                'validation_rules' => null,
+            ],
+        ]);
+
         $fields = $documentType->fields()
             ->orderBy('display_order')
             ->get(['field_name', 'field_label', 'field_type', 'field_options', 'is_required', 'validation_rules']);
 
-        return response()->json($fields);
+        return response()->json($baseFields->concat($fields)->values());
     }
 
     public function track(Request $request): View
@@ -194,7 +214,11 @@ class DocumentRequestController extends Controller
                     if ($request->hasFile($field->field_name)) {
                         $file = $request->file($field->field_name);
                         $fileName = Str::uuid().'.'.$file->getClientOriginalExtension();
-                        $path = $file->storeAs("document-uploads/{$documentRequest->request_id}", $fileName);
+                        $path = Storage::disk('local')->putFileAs(
+                            "document-uploads/{$documentRequest->request_id}",
+                            $file,
+                            $fileName,
+                        );
 
                         $fieldsToCreate[] = [
                             'field_name' => $field->field_name,

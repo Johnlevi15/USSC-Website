@@ -77,12 +77,13 @@ class AdminDashboardController extends Controller
 
         $path = (string) $field->field_value;
         abort_unless(Str::startsWith($path, "document-uploads/{$documentRequest->request_id}/"), 404);
-        abort_unless(Storage::disk('local')->exists($path), 404);
+        $disk = Storage::disk('local')->exists($path) ? 'local' : 'public';
+        abort_unless(Storage::disk($disk)->exists($path), 404);
 
         $extension = pathinfo($path, PATHINFO_EXTENSION);
         $filename = Str::slug($definition->field_label ?: $fieldName).($extension ? ".{$extension}" : '');
 
-        return Storage::disk('local')->response($path, $filename, [
+        return Storage::disk($disk)->response($path, $filename, [
             'Cache-Control' => 'no-store, private',
             'Content-Disposition' => 'inline; filename="'.$filename.'"',
             'Pragma' => 'no-cache',

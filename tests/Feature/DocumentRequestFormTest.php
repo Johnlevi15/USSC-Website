@@ -30,6 +30,34 @@ class DocumentRequestFormTest extends TestCase
             ->assertSee('Document Fee Request Form');
     }
 
+    public function test_document_type_fields_endpoint_includes_required_student_fields(): void
+    {
+        $documentType = DocumentType::create([
+            'name' => 'Document Fee Request Form',
+            'description' => 'Standard form',
+            'is_active' => true,
+        ]);
+
+        DocumentTypeField::create([
+            'document_type_id' => $documentType->id,
+            'field_name' => 'request_purpose',
+            'field_label' => 'Purpose of Request',
+            'field_type' => 'text',
+            'is_required' => true,
+            'display_order' => 1,
+        ]);
+
+        $this->get(route('document-types.fields', $documentType))
+            ->assertOk()
+            ->assertJsonPath('0.field_name', 'full_name')
+            ->assertJsonPath('0.field_label', 'Full Name')
+            ->assertJsonPath('0.is_required', true)
+            ->assertJsonPath('1.field_name', 'email')
+            ->assertJsonPath('1.field_label', 'Email Address')
+            ->assertJsonPath('1.is_required', true)
+            ->assertJsonPath('2.field_name', 'request_purpose');
+    }
+
     public function test_document_request_form_does_not_show_the_data_privacy_popup(): void
     {
         $this->get('/document-request')
@@ -519,6 +547,42 @@ class DocumentRequestFormTest extends TestCase
         Storage::disk('local')->assertExists($storedPath);
     }
 
+    public function test_document_request_file_uploads_use_the_protected_local_disk_even_when_default_disk_changes(): void
+    {
+        config(['filesystems.default' => 'public']);
+        Storage::fake('local');
+        Storage::fake('public');
+
+        $documentType = DocumentType::create([
+            'name' => 'Scholarship Request',
+            'description' => 'Scholarship form',
+            'is_active' => true,
+        ]);
+
+        DocumentTypeField::create([
+            'document_type_id' => $documentType->id,
+            'field_name' => 'student_photo',
+            'field_label' => 'Student Photo',
+            'field_type' => 'image',
+            'is_required' => true,
+            'display_order' => 1,
+        ]);
+
+        $this->post('/document-request', [
+            'document_type_id' => $documentType->id,
+            'full_name' => 'Taylor Student',
+            'email' => 'taylor@example.test',
+            'student_photo' => UploadedFile::fake()->image('student-photo.jpg'),
+        ])->assertRedirect();
+
+        $storedPath = (string) Document::query()
+            ->where('field_name', 'student_photo')
+            ->value('field_value');
+
+        Storage::disk('local')->assertExists($storedPath);
+        Storage::disk('public')->assertMissing($storedPath);
+    }
+
     public function test_document_request_form_rejects_uploaded_file_with_disallowed_extension(): void
     {
         Storage::fake('local');
@@ -671,6 +735,63 @@ class DocumentRequestFormTest extends TestCase
         $this->assertStringContainsString('no-store', $cacheControl);
         $this->assertStringContainsString('private', $cacheControl);
         $this->assertStringContainsString('registration file', $response->streamedContent());
+    }
+
+    public function test_admin_can_view_document_request_attachment_saved_on_public_disk(): void
+    {
+        Storage::fake('local');
+        Storage::fake('public');
+
+        $admin = Admin::create([
+            'name' => 'Portal Administrator',
+            'email' => 'admin@example.test',
+            'password_hash' => 'not-used',
+        ]);
+
+        $user = User::create([
+            'name' => 'Taylor Student',
+            'email' => 'taylor@example.test',
+        ]);
+
+        $documentType = DocumentType::create([
+            'name' => 'Scholarship Request',
+            'description' => 'Scholarship form',
+            'is_active' => true,
+        ]);
+
+        DocumentTypeField::create([
+            'document_type_id' => $documentType->id,
+            'field_name' => 'student_photo',
+            'field_label' => 'Student Photo',
+            'field_type' => 'image',
+            'is_required' => true,
+            'display_order' => 1,
+        ]);
+
+        $documentRequest = DocumentRequest::create([
+            'user_id' => $user->id,
+            'document_type_id' => $documentType->id,
+            'status' => 'pending',
+        ]);
+
+        $storedPath = "document-uploads/{$documentRequest->request_id}/student-photo.jpg";
+        Storage::disk('public')->put($storedPath, 'photo file');
+
+        Document::create([
+            'request_id' => $documentRequest->request_id,
+            'field_name' => 'student_photo',
+            'field_value' => $storedPath,
+        ]);
+
+        $response = $this->actingAs($admin, 'admin')
+            ->get(route('admin.documents.attachments.show', [
+                'documentRequest' => $documentRequest,
+                'fieldName' => 'student_photo',
+            ]))
+            ->assertOk()
+            ->assertHeader('X-Content-Type-Options', 'nosniff');
+
+        $this->assertStringContainsString('photo file', $response->streamedContent());
     }
 
     public function test_document_request_file_attachment_requires_admin_authentication(): void
