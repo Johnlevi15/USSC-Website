@@ -16,8 +16,8 @@ return [
     'default' => env('FILESYSTEM_DISK', 'local'),
 
     'uploads' => [
-        'documents' => env('DOCUMENT_UPLOAD_DISK', 'local'),
-        'lost_found' => env('LOST_FOUND_DISK', 'public'),
+        'documents' => env('DOCUMENT_UPLOAD_DISK', env('FILESYSTEM_DISK', 'local')),
+        'lost_found' => env('LOST_FOUND_DISK', env('FILESYSTEM_DISK', 'public')),
     ],
 
     /*

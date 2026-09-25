@@ -39,6 +39,7 @@ class LostFoundItemFormTest extends TestCase
 
     public function test_submitted_lost_found_image_can_be_streamed_for_admin_review(): void
     {
+        config(['filesystems.uploads.lost_found' => 'public']);
         Storage::fake('public');
 
         $admin = Admin::create([
@@ -99,6 +100,7 @@ class LostFoundItemFormTest extends TestCase
     public function test_lost_found_gallery_uses_same_origin_image_route_urls(): void
     {
         config(['app.url' => 'https://ussc.test']);
+        config(['filesystems.uploads.lost_found' => 'public']);
         Storage::fake('public');
 
         $user = User::create([
