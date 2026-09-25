@@ -1,0 +1,607 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lost &amp; Found | CLSU USSC Portal</title>
+    <link rel="preload" as="style" href="https://ussc-website-production-eakryk.laravel.cloud/build/assets/app-CsvuIzN5.css" /><link rel="modulepreload" as="script" href="https://ussc-website-production-eakryk.laravel.cloud/build/assets/app-BvRk9kiK.js" /><link rel="stylesheet" href="https://ussc-website-production-eakryk.laravel.cloud/build/assets/app-CsvuIzN5.css" /><script type="module" src="https://ussc-website-production-eakryk.laravel.cloud/build/assets/app-BvRk9kiK.js"></script>    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-gray-50 text-gray-800 min-h-screen flex flex-col font-sans">
+<header class="bg-red-900 text-white shadow-md sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto px-4 py-3 flex justify-between items-center">
+        <a href="https://ussc-website-production-eakryk.laravel.cloud" class="flex items-center gap-3">
+            <img src="https://ussc-website-production-eakryk.laravel.cloud/logo1.png" alt="USSC Logo" class="w-10 h-10" onerror="this.src='https://via.placeholder.com/40'">
+            <div><h1 class="font-bold text-lg leading-none tracking-wide">USSC PORTAL</h1><p class="text-xs text-red-200">Central Luzon State University</p></div>
+        </a>
+        <nav class="hidden md:flex items-center gap-1 font-medium text-sm">
+            <a href="https://ussc-website-production-eakryk.laravel.cloud" class="px-3 py-2 hover:text-yellow-300"><i class="fa-solid fa-house text-xs"></i> Home</a>
+            <a href="https://ussc-website-production-eakryk.laravel.cloud/lost-found" class="px-3 py-2 border-b-2 border-yellow-400 text-yellow-400 font-bold"><i class="fa-solid fa-box-archive text-xs"></i> Lost & Found</a>
+            <a href="https://ussc-website-production-eakryk.laravel.cloud/document-request" class="px-3 py-2 hover:text-yellow-300"><i class="fa-solid fa-file-lines text-xs"></i> Request Document</a>
+            <a href="https://ussc-website-production-eakryk.laravel.cloud/track-request" class="px-3 py-2 hover:text-yellow-300"><i class="fa-solid fa-route text-xs"></i> Track Request</a>
+                    </nav>
+        <button
+            id="mobile-menu-open"
+            type="button"
+            class="inline-flex h-10 w-10 items-center justify-center rounded-lg bg-red-950 text-white transition hover:bg-red-800 focus:outline-none focus:ring-2 focus:ring-yellow-400 md:hidden"
+            aria-controls="mobile-menu-panel"
+            aria-expanded="false"
+            aria-label="Open navigation menu"
+        >
+            <i class="fa-solid fa-bars"></i>
+        </button>
+    </div>
+</header>
+<div id="mobile-menu-overlay" class="fixed inset-0 z-[60] hidden bg-black/60 md:hidden" aria-hidden="true"></div>
+<aside
+    id="mobile-menu-panel"
+    class="fixed inset-y-0 right-0 z-[70] flex w-80 max-w-[85vw] translate-x-full flex-col bg-white text-gray-900 shadow-2xl transition-transform duration-300 ease-out md:hidden"
+    aria-labelledby="mobile-menu-title"
+    aria-hidden="true"
+>
+    <div class="flex items-center justify-between border-b border-gray-200 bg-red-900 px-4 py-3 text-white">
+        <div class="flex items-center gap-3">
+            <img src="https://ussc-website-production-eakryk.laravel.cloud/logo1.png" alt="USSC Logo" class="h-10 w-10" onerror="this.src='https://via.placeholder.com/40'">
+            <div>
+                <h2 id="mobile-menu-title" class="text-sm font-extrabold leading-none tracking-wide">USSC PORTAL</h2>
+                <p class="text-xs text-red-100">Navigation</p>
+            </div>
+        </div>
+        <button
+            id="mobile-menu-close"
+            type="button"
+            class="inline-flex h-9 w-9 items-center justify-center rounded-lg text-white transition hover:bg-red-800 focus:outline-none focus:ring-2 focus:ring-yellow-400"
+            aria-label="Close navigation menu"
+        >
+            <i class="fa-solid fa-xmark"></i>
+        </button>
+    </div>
+
+    <nav class="flex flex-1 flex-col gap-2 overflow-y-auto p-4 text-sm font-semibold">
+        <a href="https://ussc-website-production-eakryk.laravel.cloud" class="flex items-center gap-3 rounded-lg px-4 py-3 text-gray-700 hover:bg-red-50 hover:text-red-900"><i class="fa-solid fa-house w-5 text-center text-xs"></i> Home</a>
+        <a href="https://ussc-website-production-eakryk.laravel.cloud/lost-found" class="flex items-center gap-3 rounded-lg px-4 py-3 bg-red-900 text-white"><i class="fa-solid fa-box-archive w-5 text-center text-xs"></i> Lost & Found</a>
+        <a href="https://ussc-website-production-eakryk.laravel.cloud/document-request" class="flex items-center gap-3 rounded-lg px-4 py-3 text-gray-700 hover:bg-red-50 hover:text-red-900"><i class="fa-solid fa-file-lines w-5 text-center text-xs"></i> Request Document</a>
+        <a href="https://ussc-website-production-eakryk.laravel.cloud/track-request" class="flex items-center gap-3 rounded-lg px-4 py-3 text-gray-700 hover:bg-red-50 hover:text-red-900"><i class="fa-solid fa-route w-5 text-center text-xs"></i> Track Request</a>
+            </nav>
+</aside>
+<main class="flex-grow"><div class="max-w-4xl w-full mx-auto p-4 md:p-6 space-y-4">
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b pb-3 gap-2">
+        <div>
+            <h2 class="text-lg font-bold">Campus Lost & Found Gallery</h2>
+            <p class="text-xs text-gray-500">Browse reported items or submit a report for missing items.</p>
+        </div>
+        <button
+            type="button"
+            id="report-toggle"
+            onclick="toggleReportForm()"
+            aria-controls="report-form"
+            aria-expanded="false"
+            class="px-3 py-1.5 bg-red-900 text-white text-xs rounded-lg font-bold"
+        >
+            REPORT AN ITEM
+        </button>
+    </div>
+
+    
+    
+    <div id="report-form" class="hidden">
+        <div class="bg-white rounded-xl shadow-sm border p-6">
+    <div class="flex flex-col sm:flex-row justify-between gap-2 border-b pb-3 mb-4">
+        <div>
+            <h2 class="text-lg font-bold">Report an Item</h2>
+            <p class="text-xs text-gray-500">Submit a lost or found item to the campus gallery.</p>
+        </div>
+      
+        <div class="flex flex-wrap items-center gap-2 self-start">
+            <button type="button" onclick="toggleReportForm(false)" class="px-3 py-2 text-xs font-bold text-gray-600 border rounded-lg hover:bg-gray-50">
+                CLOSE
+            </button>
+            <div class="grid grid-cols-2 gap-1 p-1 bg-gray-100 rounded-lg">
+                <button type="button" onclick="setType('found')" id="found" class="px-3 py-2 rounded-md bg-red-900 text-white text-xs font-bold">FOUND</button>
+                <button type="button" onclick="setType('lost')" id="lost" class="px-3 py-2 rounded-md text-gray-600 text-xs font-bold">LOST</button>
+            </div>
+        </div>
+    </div>
+
+    <form method="POST" action="https://ussc-website-production-eakryk.laravel.cloud/report-item" enctype="multipart/form-data" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <input type="hidden" name="_token" value="fAOaJspwHDNy7zjeLvw3LeiI6XLlsHHw6035Cuur" autocomplete="off">        <label class="block text-xs font-bold text-gray-600 uppercase">
+            Name
+            <input required name="full_name" value="" class="mt-1 w-full px-3 py-2 text-sm border rounded-lg">
+        </label>
+
+        <label class="block text-xs font-bold text-gray-600 uppercase">
+            Email Address
+            <input required type="email" name="email" value="" class="mt-1 w-full px-3 py-2 text-sm border rounded-lg">
+        </label>
+
+        <label class="block text-xs font-bold text-gray-600 uppercase">
+            Item Title / Name
+            <input required name="item_name" value="" class="mt-1 w-full px-3 py-2 text-sm border rounded-lg">
+        </label>
+
+        <label class="block text-xs font-bold text-gray-600 uppercase">
+            Category
+            <select required name="category" class="mt-1 w-full px-3 py-2 text-sm border rounded-lg">
+                <option value="">Select Item Category...</option>
+                                    <option value="Cellphone" >Cellphone</option>
+                                    <option value="Gadgets" >Gadgets</option>
+                                    <option value="Earphones" >Earphones</option>
+                                    <option value="ID" >ID</option>
+                                    <option value="Wallet" >Wallet</option>
+                                    <option value="Bags" >Bags</option>
+                                    <option value="Tumblers" >Tumblers</option>
+                                    <option value="Others" >Others</option>
+                            </select>
+        </label>
+
+        <label class="block text-xs font-bold text-gray-600 uppercase md:col-span-2">
+            Description
+            <textarea required name="description" rows="3" class="mt-1 w-full px-3 py-2 text-sm border rounded-lg"></textarea>
+        </label>
+
+        <label class="block text-xs font-bold text-gray-600 uppercase md:col-span-2">
+            Picture <span class="font-normal normal-case text-gray-400">(optional, maximum 5 MB)</span>
+            <input type="file" name="image" accept="image/jpeg,image/png,image/webp" class="mt-1 w-full px-3 py-2 text-sm border rounded-lg bg-white">
+        </label>
+
+        <input type="hidden" name="status" id="status" value="found">
+
+        <label class="block text-xs font-bold text-gray-600 uppercase md:col-span-2">
+            <span id="place-label">Place Found</span>
+            <input required name="place" value="" class="mt-1 w-full px-3 py-2 text-sm border rounded-lg">
+        </label>
+
+        <button id="submit" class="md:col-span-2 w-full py-2.5 bg-red-900 text-white font-bold rounded-lg text-sm">
+            SUBMIT FOUND ITEM REPORT
+        </button>
+    </form>
+</div>
+
+    </div>
+
+    <div class="bg-white p-3 rounded-xl border shadow-sm">
+        <input id="search" type="search" placeholder="Search lost or found items..." class="w-full px-3 py-2 text-xs border rounded-lg" oninput="filterItems()">
+        <div class="flex gap-1 mt-3 pt-2 border-t text-xs font-semibold">
+            <button onclick="setFilter('ALL')" class="filter px-3 py-1 rounded-md bg-white text-red-900 shadow" data-filter="ALL">ALL</button>
+            <button onclick="setFilter('LOST')" class="filter px-3 py-1 rounded-md text-gray-600" data-filter="LOST">LOST</button>
+            <button onclick="setFilter('FOUND')" class="filter px-3 py-1 rounded-md text-gray-600" data-filter="FOUND">FOUND</button>
+        </div>
+    </div>
+
+    <div id="gallery" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <article class="item bg-white rounded-xl shadow-sm border p-4" data-status="FOUND" data-text="mouse gadgets attackshark clirdec john levi olpindo">
+                    <a href="/lost-found-items/4/image" target="_blank" rel="noopener" aria-label="View full image of Mouse" class="block">
+                <img src="/lost-found-items/4/image" alt="Mouse" class="mx-auto mb-3 aspect-square h-32 w-32 cursor-zoom-in rounded-lg object-cover">
+            </a>
+                <span class="rounded px-2 py-1 text-[10px] font-bold uppercase bg-blue-100 text-blue-800">FOUND</span>
+        <h3 class="text-sm font-bold mt-3">Mouse</h3>
+        <p class="text-xs text-gray-600 mt-1"><i class="fa-solid fa-location-dot text-red-700 mr-1"></i>CLIRDEC</p>
+        <p class="text-xs text-gray-600 mt-2"><i class="fa-solid fa-user text-red-700 mr-1"></i>Reported by John Levi Olpindo</p>
+        <p class="text-xs text-gray-400 mt-1">Submitted Sep 25, 2026</p>
+                    <p class="text-xs text-gray-500 mt-2">Attackshark</p>
+            </article>
+    </div>
+    <div id="gallery-pagination" class="hidden text-center">
+        <button type="button" id="view-more" onclick="viewMoreItems()" class="rounded-lg border border-red-900 px-4 py-2 text-xs font-bold text-red-900 hover:bg-red-50">
+            View More
+        </button>
+    </div>
+    <p id="empty" class="hidden bg-white rounded-xl p-8 text-center border text-sm text-gray-500">No items found.</p>
+</div>
+</main>
+<footer class="mt-12 overflow-hidden border-t-4 border-yellow-500 bg-neutral-900 text-white" style="background-color: #171717;">
+    <div class="mx-auto grid max-w-7xl grid-cols-1 gap-8 px-6 py-10 text-sm md:grid-cols-2 lg:grid-cols-4">
+        <div class="space-y-4">
+            <div class="flex items-center gap-3">
+                <img src="https://ussc-website-production-eakryk.laravel.cloud/clsu-logo.png" class="h-12 w-12" alt="CLSU Seal">
+                <img src="https://ussc-website-production-eakryk.laravel.cloud/logo1.png" class="h-14 w-14" alt="USSC Logo">
+            </div>
+
+            <div>
+                <h3 class="text-base font-extrabold uppercase tracking-wide text-white">Central Luzon State University</h3>
+                <p class="text-xs text-gray-300">Science City of Muñoz, Nueva Ecija, Philippines 3120</p>
+                <div class="mt-2 h-0.5 w-16 bg-yellow-500"></div>
+            </div>
+
+            <ul class="space-y-2 text-xs text-gray-300">
+                <li class="flex items-start gap-2">
+                    <i class="fa-solid fa-location-dot mt-0.5 text-yellow-500"></i>
+                    <span>Central Luzon State University, Science City of Muñoz, Nueva Ecija, Philippines</span>
+                </li>
+                <li class="flex items-center gap-2">
+                    <i class="fa-solid fa-envelope text-yellow-500"></i>
+                    <a href="mailto:clsuussc@clsu2.edu.ph" class="hover:underline">clsuussc@clsu2.edu.ph</a>
+                </li>
+                <li class="flex items-center gap-2">
+                    <i class="fa-solid fa-phone text-yellow-500"></i>
+                    <span>(044) 940 8785</span>
+                </li>
+            </ul>
+
+            <div class="overflow-hidden rounded-lg border border-gray-600 shadow-md">
+                <iframe
+                    src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3844.75782747183!2d120.92383827581177!3d15.738676247514758!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3390d63503f3fb67%3A0xb304bb92b52d921b!2sCentral%20Luzon%20State%20University!5e0!3m2!1sen!2sph!4v1710000000000!5m2!1sen!2sph"
+                    class="h-32 w-full border-0"
+                    title="Central Luzon State University location"
+                    loading="lazy"
+                    allowfullscreen>
+                </iframe>
+            </div>
+        </div>
+
+        <div class="space-y-3">
+            <h4 class="text-sm font-bold uppercase tracking-wider text-yellow-400">Vision</h4>
+            <p class="text-xs leading-relaxed text-gray-300">CLSU as a world-class National Research University for science and technology in agriculture and allied fields.</p>
+        </div>
+
+        <div class="space-y-3">
+            <h4 class="text-sm font-bold uppercase tracking-wider text-yellow-400">Mission</h4>
+            <p class="text-xs leading-relaxed text-gray-300">CLSU shall develop globally competitive, work-ready, socially-responsible and empowered human resources who value life-long learning; and to generate, disseminate, and apply knowledge and technologies for poverty alleviation, environmental protection, and sustainable development.</p>
+        </div>
+
+        <div class="space-y-3">
+            <h4 class="text-sm font-bold uppercase tracking-wider text-yellow-400">Feedback and Grievance Desk</h4>
+            <p class="text-xs leading-relaxed text-gray-300">Central Luzon State University values the voices of its students, faculty, staff, and the people it serves and is committed to continuously improve its services. As part of our commitment to quality and excellence, we encourage you to share your <span class="font-bold text-white">feedback, concerns, and suggestions</span>.</p>
+            <p class="text-xs leading-relaxed text-gray-300">To ensure your inputs are heard and addressed, we provide the official channels above or our online portal desk for receiving feedback and grievances.</p>
+
+            <ul class="space-y-2 border-t border-gray-800 pt-2 text-xs text-gray-300">
+                <li class="flex items-center gap-2">
+                    <i class="fa-solid fa-envelope text-yellow-500"></i>
+                    <a href="mailto:clsuussc@clsu2.edu.ph" class="hover:underline">clsuussc@clsu2.edu.ph</a>
+                </li>
+                <li class="flex items-center gap-2">
+                    <i class="fa-solid fa-mobile-screen-button text-yellow-500"></i>
+                    <span>+63 9537 267 511</span>
+                </li>
+                <li class="flex items-center gap-2">
+                    <i class="fa-solid fa-phone text-yellow-500"></i>
+                    <span>(044) 940 7030</span>
+                </li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="border-t border-neutral-800 py-3 text-center text-xs text-gray-400" style="background-color: #0a0a0a;">
+        <p>&copy; 2026 Central Luzon State University - All Rights Reserved.</p>
+    </div>
+</footer>
+<div id="portal-modal" class="hidden fixed inset-0 z-50 items-center justify-center bg-black/60 p-4" role="dialog" aria-modal="true" aria-labelledby="portal-modal-title">
+    <div class="w-full max-w-md rounded-xl bg-white p-6 text-center shadow-xl">
+        <div class="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-green-100 text-xl text-green-600">
+            <i class="fa-solid fa-circle-check"></i>
+        </div>
+        <h2 id="portal-modal-title" class="text-lg font-bold text-gray-800"></h2>
+        <p id="portal-modal-message" class="mt-2 text-sm text-gray-600"></p>
+        <div class="mt-5 flex gap-2">
+            <button id="portal-modal-action" type="button" class="hidden flex-1 rounded-lg bg-red-900 px-4 py-2 text-xs font-bold text-white hover:bg-red-800"></button>
+            <button type="button" onclick="closePortalModal()" class="flex-1 rounded-lg bg-gray-200 px-4 py-2 text-xs font-bold text-gray-700 hover:bg-gray-300">Close</button>
+        </div>
+    </div>
+</div>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const mobileMenuOpen = document.getElementById('mobile-menu-open');
+        const mobileMenuClose = document.getElementById('mobile-menu-close');
+        const mobileMenuOverlay = document.getElementById('mobile-menu-overlay');
+        const mobileMenuPanel = document.getElementById('mobile-menu-panel');
+
+        function openMobileMenu() {
+            mobileMenuOverlay.classList.remove('hidden');
+            mobileMenuPanel.classList.remove('translate-x-full');
+            mobileMenuOpen.setAttribute('aria-expanded', 'true');
+            mobileMenuPanel.setAttribute('aria-hidden', 'false');
+            document.body.classList.add('overflow-hidden');
+        }
+
+        function closeMobileMenu() {
+            mobileMenuOverlay.classList.add('hidden');
+            mobileMenuPanel.classList.add('translate-x-full');
+            mobileMenuOpen.setAttribute('aria-expanded', 'false');
+            mobileMenuPanel.setAttribute('aria-hidden', 'true');
+            document.body.classList.remove('overflow-hidden');
+        }
+
+        mobileMenuOpen.addEventListener('click', openMobileMenu);
+        mobileMenuClose.addEventListener('click', closeMobileMenu);
+        mobileMenuOverlay.addEventListener('click', closeMobileMenu);
+
+        document.addEventListener('keydown', function (event) {
+            if (event.key === 'Escape' && mobileMenuPanel.getAttribute('aria-hidden') === 'false') {
+                closeMobileMenu();
+            }
+        });
+    });
+
+    function showPortalModal(title, message, actionLabel = '', actionUrl = '') {
+        const modal = document.getElementById('portal-modal');
+        const action = document.getElementById('portal-modal-action');
+
+        document.getElementById('portal-modal-title').textContent = title;
+        document.getElementById('portal-modal-message').textContent = message;
+        action.textContent = actionLabel;
+        action.classList.toggle('hidden', !actionLabel || !actionUrl);
+        action.onclick = actionUrl ? () => { window.location.href = actionUrl; } : null;
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+    }
+
+    function closePortalModal() {
+        const modal = document.getElementById('portal-modal');
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+    }
+</script>
+<div id="ussc-chatbot" class="fixed bottom-5 right-5 z-[60]">
+    <div id="chatbot-window" class="mb-3 hidden w-[350px] max-w-[calc(100vw-2rem)] overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-2xl">
+        <div class="flex items-center justify-between bg-red-900 px-4 py-3 text-white">
+            <div class="flex items-center gap-3">
+                <div class="flex h-9 w-9 items-center justify-center rounded-full bg-yellow-400 text-red-900"><i class="fa-solid fa-robot"></i></div>
+                <div>
+                    <h3 class="text-sm font-bold">USSC Assistant</h3>
+                    <div class="flex items-center gap-1 text-[10px] text-red-100"><span class="h-2 w-2 rounded-full bg-green-400"></span>Online</div>
+                </div>
+            </div>
+            <button type="button" onclick="toggleChatbot()" class="flex h-8 w-8 items-center justify-center rounded-full hover:bg-red-800" aria-label="Close chatbot">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+
+        <div id="chatbot-messages" class="h-[360px] space-y-3 overflow-y-auto bg-gray-50 p-4">
+            <div class="flex items-start gap-2">
+                <div class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-red-900 text-xs text-white"><i class="fa-solid fa-robot"></i></div>
+                <div class="max-w-[82%] rounded-2xl rounded-tl-sm border bg-white px-3 py-2 shadow-sm">
+                    <p class="whitespace-pre-line text-xs leading-relaxed text-gray-700">Hello! I'm the USSC Assistant. 👋
+
+How can I help you today?</p>
+                </div>
+            </div>
+            <div class="ml-9 flex flex-wrap gap-1.5">
+                <button type="button" onclick="sendSuggestion('How do I request a document?')" class="rounded-full border border-red-200 bg-white px-2.5 py-1 text-[11px] text-red-900 hover:bg-red-50">Request Document</button>
+                <button type="button" onclick="sendSuggestion('How do I track my request?')" class="rounded-full border border-red-200 bg-white px-2.5 py-1 text-[11px] text-red-900 hover:bg-red-50">Track Request</button>
+                <button type="button" onclick="sendSuggestion('Lost and Found')" class="rounded-full border border-red-200 bg-white px-2.5 py-1 text-[11px] text-red-900 hover:bg-red-50">Lost & Found</button>
+                <button type="button" onclick="sendSuggestion('Events')" class="rounded-full border border-red-200 bg-white px-2.5 py-1 text-[11px] text-red-900 hover:bg-red-50">Events</button>
+            </div>
+        </div>
+
+        <form id="chatbot-form" class="flex items-center gap-2 border-t bg-white p-3">
+            <input id="chatbot-input" type="text" maxlength="500" autocomplete="off" placeholder="Ask the USSC Assistant..." class="min-w-0 flex-1 rounded-full border border-gray-300 px-4 py-2 text-xs outline-none focus:border-red-900 focus:ring-1 focus:ring-red-900">
+            <button id="chatbot-send" type="submit" class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-red-900 text-white transition hover:bg-red-800 disabled:cursor-not-allowed disabled:bg-gray-400" aria-label="Send message">
+                <i class="fa-solid fa-paper-plane text-xs"></i>
+            </button>
+        </form>
+        <div class="border-t bg-gray-50 px-3 py-1.5 text-center"><p class="text-[9px] text-gray-400">Automated USSC assistance</p></div>
+    </div>
+
+    <button id="chatbot-toggle" type="button" onclick="toggleChatbot()" class="ml-auto flex h-14 w-14 items-center justify-center rounded-full bg-red-900 text-xl text-white shadow-xl transition hover:scale-105 hover:bg-red-800" aria-label="Open USSC chatbot">
+        <i id="chatbot-toggle-icon" class="fa-solid fa-comments"></i>
+    </button>
+</div>
+
+<script>
+    const chatbotWindow = document.getElementById('chatbot-window');
+    const chatbotMessages = document.getElementById('chatbot-messages');
+    const chatbotForm = document.getElementById('chatbot-form');
+    const chatbotInput = document.getElementById('chatbot-input');
+    const chatbotSend = document.getElementById('chatbot-send');
+    const chatbotToggleIcon = document.getElementById('chatbot-toggle-icon');
+
+    function toggleChatbot() {
+        chatbotWindow.classList.toggle('hidden');
+        const isOpen = !chatbotWindow.classList.contains('hidden');
+        chatbotToggleIcon.className = isOpen ? 'fa-solid fa-chevron-down' : 'fa-solid fa-comments';
+        if (isOpen) setTimeout(() => chatbotInput.focus(), 100);
+    }
+
+    function scrollChatToBottom() {
+        chatbotMessages.scrollTop = chatbotMessages.scrollHeight;
+    }
+
+    function appendUserMessage(message) {
+        const wrapper = document.createElement('div');
+        wrapper.className = 'flex justify-end';
+        const bubble = document.createElement('div');
+        bubble.className = 'max-w-[82%] rounded-2xl rounded-tr-sm bg-red-900 px-3 py-2 text-xs leading-relaxed text-white';
+        bubble.textContent = message;
+        wrapper.appendChild(bubble);
+        chatbotMessages.appendChild(wrapper);
+        scrollChatToBottom();
+    }
+
+    function appendBotMessage(message, suggestions = []) {
+        const wrapper = document.createElement('div');
+        wrapper.className = 'flex items-start gap-2';
+
+        const avatar = document.createElement('div');
+        avatar.className = 'flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-red-900 text-xs text-white';
+        avatar.innerHTML = '<i class="fa-solid fa-robot"></i>';
+
+        const content = document.createElement('div');
+        content.className = 'max-w-[82%]';
+
+        const bubble = document.createElement('div');
+        bubble.className = 'rounded-2xl rounded-tl-sm border bg-white px-3 py-2 shadow-sm';
+        const paragraph = document.createElement('p');
+        paragraph.className = 'whitespace-pre-line text-xs leading-relaxed text-gray-700';
+        paragraph.textContent = message;
+        bubble.appendChild(paragraph);
+        content.appendChild(bubble);
+
+        if (suggestions.length) {
+            const choices = document.createElement('div');
+            choices.className = 'mt-2 flex flex-wrap gap-1.5';
+            suggestions.forEach((suggestion) => {
+                const button = document.createElement('button');
+                button.type = 'button';
+                button.textContent = suggestion;
+                button.className = 'rounded-full border border-red-200 bg-white px-2.5 py-1 text-[10px] text-red-900 hover:bg-red-50';
+                button.addEventListener('click', () => sendSuggestion(suggestion));
+                choices.appendChild(button);
+            });
+            content.appendChild(choices);
+        }
+
+        wrapper.appendChild(avatar);
+        wrapper.appendChild(content);
+        chatbotMessages.appendChild(wrapper);
+        scrollChatToBottom();
+    }
+
+    function appendTypingIndicator() {
+        const wrapper = document.createElement('div');
+        wrapper.id = 'chatbot-typing';
+        wrapper.className = 'flex items-start gap-2';
+        wrapper.innerHTML = `
+            <div class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-red-900 text-xs text-white"><i class="fa-solid fa-robot"></i></div>
+            <div class="rounded-2xl rounded-tl-sm border bg-white px-3 py-2 shadow-sm">
+                <div class="flex gap-1">
+                    <span class="h-1.5 w-1.5 animate-bounce rounded-full bg-gray-400"></span>
+                    <span class="h-1.5 w-1.5 animate-bounce rounded-full bg-gray-400" style="animation-delay:150ms"></span>
+                    <span class="h-1.5 w-1.5 animate-bounce rounded-full bg-gray-400" style="animation-delay:300ms"></span>
+                </div>
+            </div>`;
+        chatbotMessages.appendChild(wrapper);
+        scrollChatToBottom();
+    }
+
+    async function sendChatMessage(message) {
+        const cleanMessage = message.trim();
+        if (!cleanMessage) return;
+
+        appendUserMessage(cleanMessage);
+        chatbotInput.value = '';
+        chatbotInput.disabled = true;
+        chatbotSend.disabled = true;
+        appendTypingIndicator();
+
+        try {
+            const response = await fetch('https://ussc-website-production-eakryk.laravel.cloud/chatbot/message', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': 'fAOaJspwHDNy7zjeLvw3LeiI6XLlsHHw6035Cuur'
+                },
+                body: JSON.stringify({ message: cleanMessage })
+            });
+            const data = await response.json();
+            document.getElementById('chatbot-typing')?.remove();
+            if (!response.ok) throw new Error(data.message || 'Unable to process your message.');
+            appendBotMessage(data.reply, data.suggestions || []);
+        } catch (error) {
+            document.getElementById('chatbot-typing')?.remove();
+            appendBotMessage('Sorry, I cannot respond right now. Please try again.');
+            console.error('Chatbot error:', error);
+        } finally {
+            chatbotInput.disabled = false;
+            chatbotSend.disabled = false;
+            chatbotInput.focus();
+        }
+    }
+
+    function sendSuggestion(message) {
+        if (chatbotWindow.classList.contains('hidden')) toggleChatbot();
+        sendChatMessage(message);
+    }
+
+    chatbotForm.addEventListener('submit', function (event) {
+        event.preventDefault();
+        sendChatMessage(chatbotInput.value);
+    });
+</script>
+    <script>
+        function toggleReportForm(show = null) {
+            const form = document.getElementById('report-form');
+            const button = document.querySelector('[aria-controls="report-form"]');
+            const shouldShow = show === null ? form.classList.contains('hidden') : show;
+
+            form.classList.toggle('hidden', !shouldShow);
+            button.setAttribute('aria-expanded', shouldShow ? 'true' : 'false');
+            button.classList.toggle('hidden', shouldShow);
+
+            if (shouldShow) {
+                form.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+        }
+
+        function setType(type) {
+            const lost = type === 'lost';
+            document.getElementById('status').value = type;
+            document.getElementById('found').className = lost
+                ? 'px-3 py-2 rounded-md text-gray-600 text-xs font-bold'
+                : 'px-3 py-2 rounded-md bg-red-900 text-white text-xs font-bold';
+            document.getElementById('lost').className = lost
+                ? 'px-3 py-2 rounded-md bg-yellow-600 text-white text-xs font-bold'
+                : 'px-3 py-2 rounded-md text-gray-600 text-xs font-bold';
+            document.getElementById('place-label').textContent = lost
+                ? 'Place Lost'
+                : 'Place Found';
+            document.getElementById('submit').textContent = lost
+                ? 'SUBMIT LOST ITEM REPORT'
+                : 'SUBMIT FOUND ITEM REPORT';
+        }
+    </script>
+    <script>
+        const pageSize = 10;
+        const visibleLimits = {
+            ALL: pageSize,
+            LOST: pageSize,
+            FOUND: pageSize,
+        };
+        let active = 'ALL';
+
+        function setFilter(value) {
+            active = value;
+            document.querySelectorAll('.filter').forEach((button) => {
+                button.className = 'filter px-3 py-1 rounded-md text-gray-600';
+            });
+
+            document.querySelector(`[data-filter="${value}"]`).className = 'filter px-3 py-1 rounded-md bg-white text-red-900 shadow';
+            filterItems();
+        }
+
+        function viewMoreItems() {
+            visibleLimits[active] += pageSize;
+            filterItems();
+        }
+
+        async function refreshLostFoundItems() {
+            try {
+                const response = await fetch('https://ussc-website-production-eakryk.laravel.cloud/lost-found/items', {
+                    headers: {
+                        'Accept': 'application/json',
+                    },
+                });
+
+                if (! response.ok) {
+                    return;
+                }
+
+                const data = await response.json();
+                document.getElementById('gallery').innerHTML = data.html;
+                filterItems();
+            } catch (error) {
+                // Keep the current gallery visible if a refresh fails.
+            }
+        }
+
+        function filterItems() {
+            const query = document.getElementById('search').value.toLowerCase();
+            const items = Array.from(document.querySelectorAll('.item'));
+            const matches = items.filter((item) => {
+                return (active === 'ALL' || item.dataset.status === active) && item.dataset.text.includes(query);
+            });
+
+            items.forEach((item) => item.classList.add('hidden'));
+
+            matches.slice(0, visibleLimits[active]).forEach((item) => {
+                item.classList.remove('hidden');
+            });
+
+            document.getElementById('empty').classList.toggle('hidden', matches.length > 0);
+            document.getElementById('gallery-pagination').classList.toggle('hidden', matches.length <= visibleLimits[active]);
+        }
+
+        filterItems();
+        setInterval(refreshLostFoundItems, 10000);
+    </script>
+<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a40927eeddb17d1f',t:'MTc5MDMzMDE1NQ=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>

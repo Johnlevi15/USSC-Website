@@ -58,6 +58,37 @@ class DocumentRequestFormTest extends TestCase
             ->assertJsonPath('2.field_name', 'request_purpose');
     }
 
+    public function test_document_type_fields_endpoint_does_not_duplicate_base_student_fields(): void
+    {
+        $documentType = DocumentType::create([
+            'name' => 'Document Fee Request Form',
+            'description' => 'Standard form',
+            'is_active' => true,
+        ]);
+
+        DocumentTypeField::create([
+            'document_type_id' => $documentType->id,
+            'field_name' => 'full_name',
+            'field_label' => 'Full Name',
+            'field_type' => 'text',
+            'is_required' => true,
+            'display_order' => 1,
+        ]);
+        DocumentTypeField::create([
+            'document_type_id' => $documentType->id,
+            'field_name' => 'request_purpose',
+            'field_label' => 'Purpose of Request',
+            'field_type' => 'text',
+            'is_required' => true,
+            'display_order' => 2,
+        ]);
+
+        $response = $this->get(route('document-types.fields', $documentType))
+            ->assertOk();
+
+        $this->assertSame(['full_name', 'email', 'request_purpose'], collect($response->json())->pluck('field_name')->all());
+    }
+
     public function test_document_request_form_does_not_show_the_data_privacy_popup(): void
     {
         $this->get('/document-request')
@@ -185,6 +216,36 @@ class DocumentRequestFormTest extends TestCase
             'field_label' => 'Student ID Number',
             'field_type' => 'text',
             'is_required' => true,
+        ]);
+    }
+
+    public function test_admin_cannot_create_a_document_type_field_that_duplicates_base_student_fields(): void
+    {
+        $admin = Admin::create([
+            'name' => 'Portal Administrator',
+            'email' => 'admin@example.test',
+            'password_hash' => 'not-used',
+        ]);
+
+        $documentType = DocumentType::create([
+            'name' => 'Scholarship Request',
+            'description' => 'Scholarship form',
+            'is_active' => true,
+        ]);
+
+        $this->actingAs($admin, 'admin')
+            ->from(route('admin.document-types.edit', $documentType))
+            ->post(route('admin.document-types.fields.add', $documentType), [
+                'field_label' => 'Full Name',
+                'field_type' => 'text',
+                'is_required' => '1',
+            ])
+            ->assertRedirect(route('admin.document-types.edit', $documentType))
+            ->assertSessionHasErrors('field_label');
+
+        $this->assertDatabaseMissing('document_type_fields', [
+            'document_type_id' => $documentType->id,
+            'field_label' => 'Full Name',
         ]);
     }
 
@@ -542,6 +603,38 @@ class DocumentRequestFormTest extends TestCase
         $this->assertDatabaseHas('document', [
             'field_name' => 'requested_fees',
             'field_value' => '["ID Fee","Other: Student Council Election Requirement"]',
+        ]);
+    }
+
+    public function test_document_request_form_does_not_store_base_student_fields_as_custom_documents(): void
+    {
+        $documentType = DocumentType::create([
+            'name' => 'Clearance Request',
+            'description' => 'Clearance form',
+            'is_active' => true,
+        ]);
+
+        DocumentTypeField::create([
+            'document_type_id' => $documentType->id,
+            'field_name' => 'full_name',
+            'field_label' => 'Full Name',
+            'field_type' => 'text',
+            'is_required' => true,
+            'display_order' => 1,
+        ]);
+
+        $this->post('/document-request', [
+            'document_type_id' => $documentType->id,
+            'full_name' => 'Taylor Student',
+            'email' => 'taylor@example.test',
+        ])->assertRedirect();
+
+        $this->assertDatabaseHas('users', [
+            'name' => 'Taylor Student',
+            'email' => 'taylor@example.test',
+        ]);
+        $this->assertDatabaseMissing('document', [
+            'field_name' => 'full_name',
         ]);
     }
 

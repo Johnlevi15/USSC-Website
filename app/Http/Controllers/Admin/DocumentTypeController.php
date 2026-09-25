@@ -108,6 +108,13 @@ class DocumentTypeController extends Controller
             $validated['field_label'],
             $documentType,
         );
+
+        if ($this->isBaseField($validated['field_name'], $validated['field_label'])) {
+            throw ValidationException::withMessages([
+                'field_label' => 'Full name and email address are already included in every document request.',
+            ]);
+        }
+
         $validated['is_required'] = $request->boolean('is_required');
 
         $validated['field_options'] = $this->fieldOptions($validated);
@@ -241,5 +248,14 @@ class DocumentTypeController extends Controller
             fn (string $option): string => trim($option),
             $options,
         ), fn (string $option): bool => $option !== ''));
+    }
+
+    private function isBaseField(string $fieldName, string $fieldLabel): bool
+    {
+        $baseFieldNames = ['full_name', 'email'];
+        $baseFieldLabels = ['full name', 'email address'];
+
+        return in_array($fieldName, $baseFieldNames, true)
+            || in_array(Str::lower(trim($fieldLabel)), $baseFieldLabels, true);
     }
 }

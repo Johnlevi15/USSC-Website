@@ -4,10 +4,12 @@ namespace App\Http\Controllers;
 
 use App\Models\DocumentRequest;
 use App\Models\DocumentType;
+use App\Models\DocumentTypeField;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -51,7 +53,9 @@ class DocumentRequestController extends Controller
 
         $fields = $documentType->fields()
             ->orderBy('display_order')
-            ->get(['field_name', 'field_label', 'field_type', 'field_options', 'is_required', 'validation_rules']);
+            ->get(['field_name', 'field_label', 'field_type', 'field_options', 'is_required', 'validation_rules'])
+            ->reject(fn ($field): bool => $this->isBaseField($field->field_name, $field->field_label))
+            ->values();
 
         return response()->json($baseFields->concat($fields)->values());
     }
@@ -105,7 +109,7 @@ class DocumentRequestController extends Controller
                 'email' => ['required', 'email', 'max:255'],
             ];
 
-            foreach ($documentType->fields as $field) {
+            foreach ($this->customFields($documentType) as $field) {
                 if ($this->hasOtherOption($field->field_options)) {
                     $rules[$field->field_name.'_other'] = ['nullable', 'string', 'max:150'];
                 }
@@ -209,7 +213,7 @@ class DocumentRequestController extends Controller
 
             // Store all dynamic fields
             $fieldsToCreate = [];
-            foreach ($documentType->fields as $field) {
+            foreach ($this->customFields($documentType) as $field) {
                 if (in_array($field->field_type, ['file', 'image'], true)) {
                     if ($request->hasFile($field->field_name)) {
                         $file = $request->file($field->field_name);
@@ -291,7 +295,7 @@ class DocumentRequestController extends Controller
     {
         $errors = [];
 
-        foreach ($documentType->fields as $field) {
+        foreach ($this->customFields($documentType) as $field) {
             if (! $this->hasOtherOption($field->field_options)) {
                 continue;
             }
@@ -350,5 +354,24 @@ class DocumentRequestController extends Controller
     private function hasOtherOption(?array $options): bool
     {
         return in_array('Other', $options ?? [], true);
+    }
+
+    /**
+     * @return Collection<int, DocumentTypeField>
+     */
+    private function customFields(DocumentType $documentType): Collection
+    {
+        return $documentType->fields
+            ->reject(fn ($field): bool => $this->isBaseField($field->field_name, $field->field_label))
+            ->values();
+    }
+
+    private function isBaseField(string $fieldName, string $fieldLabel): bool
+    {
+        $baseFieldNames = ['full_name', 'email'];
+        $baseFieldLabels = ['full name', 'email address'];
+
+        return in_array($fieldName, $baseFieldNames, true)
+            || in_array(Str::lower(trim($fieldLabel)), $baseFieldLabels, true);
     }
 }
