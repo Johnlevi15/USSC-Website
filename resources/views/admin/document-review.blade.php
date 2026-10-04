@@ -68,6 +68,20 @@
             </div>
         </section>
 
+        @if(filled($documentRequest->admin_remarks))
+            <section class="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
+                <div class="border-b bg-gray-50 px-5 py-4">
+                    <h3 class="font-bold text-gray-900">Admin Remarks</h3>
+                </div>
+                <div class="space-y-5 p-5">
+                    <div>
+                        <p class="text-xs font-bold uppercase tracking-wide text-gray-500">Feedback</p>
+                        <p class="mt-2 whitespace-pre-line break-words text-sm text-gray-900">{{ $documentRequest->admin_remarks }}</p>
+                    </div>
+                </div>
+            </section>
+        @endif
+
         <section class="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
             <div class="border-b bg-gray-50 px-5 py-4">
                 <h3 class="font-bold text-gray-900">Submitted Form Details</h3>

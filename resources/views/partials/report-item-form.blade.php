@@ -29,44 +29,65 @@
         @csrf
         <label class="block text-xs font-bold text-gray-600 uppercase">
             Name
-            <input required name="full_name" value="{{ old('full_name') }}" class="mt-1 w-full px-3 py-2 text-sm border rounded-lg">
+            <input required name="full_name" value="{{ old('full_name') }}" class="mt-1 w-full px-3 py-2 text-sm border rounded-lg @error('full_name') border-red-300 bg-red-50 @enderror">
+            @error('full_name')
+                <span class="mt-1 block text-[11px] font-medium text-red-600">{{ $message }}</span>
+            @enderror
         </label>
 
         <label class="block text-xs font-bold text-gray-600 uppercase">
             Email Address
-            <input required type="email" name="email" value="{{ old('email') }}" class="mt-1 w-full px-3 py-2 text-sm border rounded-lg">
+            <input required type="email" name="email" value="{{ old('email') }}" class="mt-1 w-full px-3 py-2 text-sm border rounded-lg @error('email') border-red-300 bg-red-50 @enderror">
+            @error('email')
+                <span class="mt-1 block text-[11px] font-medium text-red-600">{{ $message }}</span>
+            @enderror
         </label>
 
         <label class="block text-xs font-bold text-gray-600 uppercase">
             Item Title / Name
-            <input required name="item_name" value="{{ old('item_name') }}" class="mt-1 w-full px-3 py-2 text-sm border rounded-lg">
+            <input required name="item_name" value="{{ old('item_name') }}" class="mt-1 w-full px-3 py-2 text-sm border rounded-lg @error('item_name') border-red-300 bg-red-50 @enderror">
+            @error('item_name')
+                <span class="mt-1 block text-[11px] font-medium text-red-600">{{ $message }}</span>
+            @enderror
         </label>
 
         <label class="block text-xs font-bold text-gray-600 uppercase">
             Category
-            <select required name="category" class="mt-1 w-full px-3 py-2 text-sm border rounded-lg">
+            <select required name="category" class="mt-1 w-full px-3 py-2 text-sm border rounded-lg @error('category') border-red-300 bg-red-50 @enderror">
                 <option value="">Select Item Category...</option>
                 @foreach(['Cellphone', 'Gadgets', 'Earphones', 'ID', 'Wallet', 'Bags', 'Tumblers', 'Others'] as $category)
                     <option value="{{ $category }}" @selected(old('category') === $category)>{{ $category }}</option>
                 @endforeach
             </select>
+            @error('category')
+                <span class="mt-1 block text-[11px] font-medium text-red-600">{{ $message }}</span>
+            @enderror
         </label>
 
         <label class="block text-xs font-bold text-gray-600 uppercase md:col-span-2">
             Description
-            <textarea required name="description" rows="3" class="mt-1 w-full px-3 py-2 text-sm border rounded-lg">{{ old('description') }}</textarea>
+            <textarea required name="description" rows="3" class="mt-1 w-full px-3 py-2 text-sm border rounded-lg @error('description') border-red-300 bg-red-50 @enderror">{{ old('description') }}</textarea>
+            @error('description')
+                <span class="mt-1 block text-[11px] font-medium text-red-600">{{ $message }}</span>
+            @enderror
         </label>
 
         <label class="block text-xs font-bold text-gray-600 uppercase md:col-span-2">
             Picture <span class="font-normal normal-case text-gray-400">(optional, maximum 5 MB)</span>
-            <input type="file" name="image" accept="image/jpeg,image/png,image/webp" class="mt-1 w-full px-3 py-2 text-sm border rounded-lg bg-white">
+            <input type="file" name="image" accept="image/jpeg,image/png,image/webp" class="mt-1 w-full px-3 py-2 text-sm border rounded-lg bg-white @error('image') border-red-300 bg-red-50 @enderror">
+            @error('image')
+                <span class="mt-1 block text-[11px] font-medium text-red-600">{{ $message }}</span>
+            @enderror
         </label>
 
         <input type="hidden" name="status" id="status" value="{{ $selectedStatus }}">
 
         <label class="block text-xs font-bold text-gray-600 uppercase md:col-span-2">
             <span id="place-label">{{ $selectedStatus === 'lost' ? 'Location (Where Lost)' : 'Place Found' }}</span>
-            <input required name="place" value="{{ old('place') }}" class="mt-1 w-full px-3 py-2 text-sm border rounded-lg">
+            <input required name="place" value="{{ old('place') }}" class="mt-1 w-full px-3 py-2 text-sm border rounded-lg @error('place') border-red-300 bg-red-50 @enderror">
+            @error('place')
+                <span class="mt-1 block text-[11px] font-medium text-red-600">{{ $message }}</span>
+            @enderror
         </label>
 
         <button id="submit" class="md:col-span-2 w-full py-2.5 bg-red-900 text-white font-bold rounded-lg text-sm">

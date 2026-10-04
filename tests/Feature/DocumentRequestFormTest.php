@@ -11,6 +11,7 @@ use App\Models\User;
 use Illuminate\Foundation\Testing\LazilyRefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\MessageBag;
 use Tests\TestCase;
 
 class DocumentRequestFormTest extends TestCase
@@ -89,6 +90,34 @@ class DocumentRequestFormTest extends TestCase
         $this->assertSame(['full_name', 'email', 'request_purpose'], collect($response->json())->pluck('field_name')->all());
     }
 
+    public function test_document_request_validation_errors_keep_old_input_visible_for_repair(): void
+    {
+        $documentType = DocumentType::create([
+            'name' => 'Document Fee Request Form',
+            'description' => 'Standard form',
+            'is_active' => true,
+        ]);
+
+        $this->withSession([
+            '_old_input' => [
+                'document_type_id' => $documentType->id,
+                'full_name' => 'Taylor Student',
+                'email' => 'not-an-email',
+            ],
+            '_flash' => [
+                'errors' => new MessageBag([
+                    'email' => ['The email field must be a valid email address.'],
+                ]),
+            ],
+        ])
+            ->get('/document-request')
+            ->assertOk()
+            ->assertSee('validationErrors')
+            ->assertSee('Taylor Student')
+            ->assertSee('not-an-email')
+            ->assertSee('The email field must be a valid email address.');
+    }
+
     public function test_document_request_form_does_not_show_the_data_privacy_popup(): void
     {
         $this->get('/document-request')
@@ -131,6 +160,68 @@ class DocumentRequestFormTest extends TestCase
             ->assertSeeText('Tracking Number')
             ->assertSeeText('Please copy it, save a copy, or take a screenshot.')
             ->assertSee('USSC-'.now()->year.'-0001');
+    }
+
+    public function test_document_request_form_rejects_negative_number_fields(): void
+    {
+        $documentType = DocumentType::create([
+            'name' => 'Scholarship Request',
+            'description' => 'Scholarship form',
+            'is_active' => true,
+        ]);
+
+        DocumentTypeField::create([
+            'document_type_id' => $documentType->id,
+            'field_name' => 'family_members',
+            'field_label' => 'Number of Family Members',
+            'field_type' => 'number',
+            'is_required' => true,
+            'display_order' => 1,
+        ]);
+
+        $this->from('/document-request')
+            ->post('/document-request', [
+                'document_type_id' => $documentType->id,
+                'full_name' => 'Taylor Student',
+                'email' => 'taylor@example.test',
+                'family_members' => '-1',
+            ])
+            ->assertRedirect('/document-request')
+            ->assertSessionHasErrors([
+                'family_members' => 'The family members field must be at least 0.',
+            ]);
+
+        $this->assertDatabaseCount('document_requests', 0);
+    }
+
+    public function test_document_request_form_accepts_zero_for_number_fields(): void
+    {
+        $documentType = DocumentType::create([
+            'name' => 'Scholarship Request',
+            'description' => 'Scholarship form',
+            'is_active' => true,
+        ]);
+
+        DocumentTypeField::create([
+            'document_type_id' => $documentType->id,
+            'field_name' => 'family_members',
+            'field_label' => 'Number of Family Members',
+            'field_type' => 'number',
+            'is_required' => true,
+            'display_order' => 1,
+        ]);
+
+        $this->post('/document-request', [
+            'document_type_id' => $documentType->id,
+            'full_name' => 'Taylor Student',
+            'email' => 'taylor@example.test',
+            'family_members' => '0',
+        ])->assertRedirect();
+
+        $this->assertDatabaseHas('document', [
+            'field_name' => 'family_members',
+            'field_value' => '0',
+        ]);
     }
 
     public function test_admin_can_create_a_checkbox_field_for_a_document_type(): void
@@ -374,6 +465,42 @@ class DocumentRequestFormTest extends TestCase
             ->assertSee('Taylor Student')
             ->assertSee('Clearance Request')
             ->assertSee("Request #{$documentRequest->request_id}");
+    }
+
+    public function test_admin_can_review_document_request_details_with_saved_feedback(): void
+    {
+        $admin = Admin::create([
+            'name' => 'Portal Administrator',
+            'email' => 'admin@example.test',
+            'password_hash' => 'not-used',
+        ]);
+
+        $user = User::create([
+            'name' => 'Taylor Student',
+            'email' => 'taylor@example.test',
+        ]);
+
+        $documentType = DocumentType::create([
+            'name' => 'Clearance Request',
+            'description' => 'Clearance form',
+            'is_active' => true,
+        ]);
+
+        $documentRequest = DocumentRequest::create([
+            'user_id' => $user->id,
+            'document_type_id' => $documentType->id,
+            'status' => 'pending',
+            'admin_remarks' => 'Please complete the requirement letter before processing.',
+        ]);
+
+        $this->actingAs($admin, 'admin')
+            ->get(route('admin.documents.review', $documentRequest))
+            ->assertOk()
+            ->assertSeeText('Review Document Request')
+            ->assertSeeText('Admin Remarks')
+            ->assertSeeText('Please complete the requirement letter before processing.')
+            ->assertSeeText('Request Information')
+            ->assertSeeText('Student Information');
     }
 
     public function test_admin_can_delete_an_unused_document_type(): void

@@ -152,7 +152,12 @@ class DocumentRequestController extends Controller
                 if ($field->is_required) {
                     $fieldRules[] = 'required';
                 }
-                $fieldRules[] = 'string';
+                if ($field->field_type === 'number') {
+                    $fieldRules[] = 'numeric';
+                    $fieldRules[] = 'min:0';
+                } else {
+                    $fieldRules[] = 'string';
+                }
                 if ($field->validation_rules) {
                     $fieldRules[] = $field->validation_rules;
                 }

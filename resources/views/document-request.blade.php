@@ -77,7 +77,68 @@
 
 @push('scripts')
 <script>
-document.getElementById('document_type').addEventListener('change', async function() {
+const validationErrors = @json($errors->messages());
+const oldFormValues = @json(old());
+const documentTypeSelect = document.getElementById('document_type');
+
+function applyFieldError(input, fieldName) {
+    const message = validationErrors[fieldName]?.[0];
+    if (!message) {
+        return;
+    }
+
+    input.classList.add('border-red-300', 'focus:border-red-500', 'focus:ring-red-100');
+    input.setAttribute('aria-invalid', 'true');
+
+    const errorNode = document.createElement('p');
+    errorNode.className = 'mt-1 text-[11px] font-medium text-red-600';
+    errorNode.textContent = message;
+    input.parentElement.appendChild(errorNode);
+}
+
+function applyCheckboxError(checkboxes, fieldName, otherInput) {
+    const message = validationErrors[fieldName]?.[0];
+    if (!message) {
+        return;
+    }
+
+    checkboxes.forEach((checkbox) => checkbox.classList.add('border-red-300'));
+    if (otherInput) {
+        otherInput.classList.add('border-red-300');
+    }
+
+    const wrapper = checkboxes[0]?.closest('div') || checkboxes[0]?.parentElement;
+    const errorNode = document.createElement('p');
+    errorNode.className = 'mt-1 text-[11px] font-medium text-red-600';
+    errorNode.textContent = message;
+    wrapper?.appendChild(errorNode);
+}
+
+function setFormValue(input, fieldName) {
+    if (!input || !fieldName || input.type === 'file' || input.type === 'image') {
+        return;
+    }
+
+    if (fieldName in oldFormValues) {
+        const value = oldFormValues[fieldName];
+
+        if (Array.isArray(value)) {
+            if (input.type === 'checkbox') {
+                input.checked = value.includes(input.value);
+            }
+            return;
+        }
+
+        if (input.type === 'checkbox') {
+            input.checked = String(value) === String(input.value);
+            return;
+        }
+
+        input.value = value;
+    }
+}
+
+documentTypeSelect.addEventListener('change', async function() {
     const typeId = this.value;
     const description = this.options[this.selectedIndex]?.dataset.description;
     const descriptionDiv = document.getElementById('type-description');
@@ -117,6 +178,7 @@ document.getElementById('document_type').addEventListener('change', async functi
                 const optionsWrapper = document.createElement('div');
                 optionsWrapper.className = 'mt-2 space-y-2 normal-case';
 
+                const checkboxes = [];
                 options.forEach(opt => {
                     const optionLabel = document.createElement('label');
                     optionLabel.className = 'flex items-center gap-2 text-sm font-medium text-gray-700';
@@ -126,6 +188,7 @@ document.getElementById('document_type').addEventListener('change', async functi
                     checkbox.name = field.field_name + '[]';
                     checkbox.value = opt;
                     checkbox.className = 'h-4 w-4 rounded border-gray-300 text-red-900 focus:ring-red-900';
+                    checkboxes.push(checkbox);
 
                     const optionText = document.createElement('span');
                     optionText.textContent = opt;
@@ -133,17 +196,23 @@ document.getElementById('document_type').addEventListener('change', async functi
                     optionLabel.appendChild(checkbox);
                     optionLabel.appendChild(optionText);
                     optionsWrapper.appendChild(optionLabel);
+
+                    setFormValue(checkbox, field.field_name);
                 });
 
                 wrapper.appendChild(optionsWrapper);
 
-                if (hasOther) {
-                    const otherInput = document.createElement('input');
-                    otherInput.type = 'text';
-                    otherInput.name = field.field_name + '_other';
-                    otherInput.placeholder = 'Please specify';
-                    otherInput.className = 'mt-2 hidden w-full rounded-lg border px-3 py-2 text-sm font-normal normal-case';
+                const otherInput = hasOther ? (() => {
+                    const input = document.createElement('input');
+                    input.type = 'text';
+                    input.name = field.field_name + '_other';
+                    input.placeholder = 'Please specify';
+                    input.className = 'mt-2 hidden w-full rounded-lg border px-3 py-2 text-sm font-normal normal-case';
+                    input.value = oldFormValues?.[field.field_name + '_other'] ?? '';
+                    return input;
+                })() : null;
 
+                if (hasOther) {
                     optionsWrapper.addEventListener('change', () => {
                         const otherCheckbox = optionsWrapper.querySelector(`input[value="Other"]`);
                         const showOther = otherCheckbox?.checked;
@@ -159,6 +228,7 @@ document.getElementById('document_type').addEventListener('change', async functi
                     wrapper.appendChild(otherInput);
                 }
 
+                applyCheckboxError(checkboxes, field.field_name, otherInput);
                 fieldsContainer.appendChild(wrapper);
 
                 return;
@@ -184,6 +254,10 @@ document.getElementById('document_type').addEventListener('change', async functi
                 input = document.createElement('input');
                 input.type = field.field_type;
 
+                if (field.field_type === 'number') {
+                    input.min = '0';
+                }
+
                 if (field.field_type === 'file') {
                     input.accept = '.pdf,.doc,.docx,.jpg,.jpeg,.png';
                 }
@@ -197,6 +271,7 @@ document.getElementById('document_type').addEventListener('change', async functi
             input.required = field.is_required;
             input.className = 'mt-1 w-full px-3 py-2 text-sm border rounded-lg';
 
+            setFormValue(input, field.field_name);
             wrapper.appendChild(input);
 
             if (field.field_type === 'select' && (field.field_options || []).includes('Other')) {
@@ -205,6 +280,7 @@ document.getElementById('document_type').addEventListener('change', async functi
                 otherInput.name = field.field_name + '_other';
                 otherInput.placeholder = 'Please specify';
                 otherInput.className = 'mt-2 hidden w-full rounded-lg border px-3 py-2 text-sm font-normal normal-case';
+                otherInput.value = oldFormValues?.[field.field_name + '_other'] ?? '';
 
                 input.addEventListener('change', () => {
                     const showOther = input.value === 'Other';
@@ -217,9 +293,15 @@ document.getElementById('document_type').addEventListener('change', async functi
                     }
                 });
 
+                if (oldFormValues?.[field.field_name] === 'Other') {
+                    otherInput.classList.remove('hidden');
+                    otherInput.required = true;
+                }
+
                 wrapper.appendChild(otherInput);
             }
 
+            applyFieldError(input, field.field_name);
             fieldsContainer.appendChild(wrapper);
         });
     } catch (err) {
@@ -227,9 +309,8 @@ document.getElementById('document_type').addEventListener('change', async functi
     }
 });
 
-// Restore selection after validation error
-if (document.getElementById('document_type').value) {
-    document.getElementById('document_type').dispatchEvent(new Event('change'));
+if (documentTypeSelect.value) {
+    documentTypeSelect.dispatchEvent(new Event('change'));
 }
 
 // Success modal functions
