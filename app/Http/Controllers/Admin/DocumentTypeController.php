@@ -97,7 +97,7 @@ class DocumentTypeController extends Controller
         $validated = $request->validate([
             'field_name' => ['nullable', 'string', 'max:100', 'regex:/^[a-z_]+$/'],
             'field_label' => ['required', 'string', 'max:150'],
-            'field_type' => ['required', 'in:text,email,number,date,select,checkbox,file,image'],
+            'field_type' => ['required', 'in:text,email,phone,number,date,select,checkbox,file,image'],
             'field_options' => ['nullable', 'string', 'max:2000'],
             'is_required' => ['sometimes', 'boolean'],
             'validation_rules' => ['nullable', 'string', 'max:255'],
@@ -139,7 +139,7 @@ class DocumentTypeController extends Controller
     {
         $validated = $request->validate([
             'field_label' => ['required', 'string', 'max:150'],
-            'field_type' => ['required', 'in:text,email,textarea,number,date,select,checkbox,file,image'],
+            'field_type' => ['required', 'in:text,email,phone,textarea,number,date,select,checkbox,file,image'],
             'field_options' => ['nullable', 'string', 'max:2000'],
             'is_required' => ['sometimes', 'boolean'],
             'validation_rules' => ['nullable', 'string', 'max:255'],

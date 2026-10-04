@@ -248,7 +248,8 @@ class DocumentRequestFormTest extends TestCase
             ->assertSee('max:255')
             ->assertSee('size:10')
             ->assertDontSee('require a valid email address')
-            ->assertDontSee('regex:/^[0-9]{10}$/');
+            ->assertDontSee('regex:/^[0-9]{10}$/')
+            ->assertSee('Phone Number (Philippines)');
 
         $this->actingAs($admin, 'admin')
             ->post(route('admin.document-types.fields.add', $documentType), [
@@ -333,6 +334,10 @@ class DocumentRequestFormTest extends TestCase
             ->assertSeeText('Student ID Number')
             ->assertSeeText('Delete')
             ->assertSee('inline-flex w-full items-center justify-center gap-1.5 rounded-lg bg-red-700', false)
+            ->assertSee('id="deleteDocumentFieldModal"', false)
+            ->assertSee('role="dialog"', false)
+            ->assertSee('id="confirmDeleteDocumentField"', false)
+            ->assertDontSee('confirm(\'Delete this field?')
             ->assertSeeText('Enter one option per line. Use "Other" to let users type a custom answer.');
     }
 
@@ -418,6 +423,69 @@ class DocumentRequestFormTest extends TestCase
             ])
             ->assertRedirect('/document-request')
             ->assertSessionHasErrors('student_id_number');
+
+        $this->assertDatabaseCount('document', 1);
+    }
+
+    public function test_philippine_phone_field_accepts_eleven_digit_numbers_starting_with_09_and_rejects_other_lengths(): void
+    {
+        $admin = Admin::create([
+            'name' => 'Portal Administrator',
+            'email' => 'admin@example.test',
+            'password_hash' => 'not-used',
+        ]);
+
+        $documentType = DocumentType::create([
+            'name' => 'Contact Information Request',
+            'description' => 'Contact details form',
+            'is_active' => true,
+        ]);
+
+        $this->actingAs($admin, 'admin')
+            ->post(route('admin.document-types.fields.add', $documentType), [
+                'field_label' => 'Phone Number',
+                'field_type' => 'phone',
+                'is_required' => '1',
+            ])
+            ->assertRedirect();
+
+        $field = $documentType->fields()->where('field_name', 'phone_number')->firstOrFail();
+        $this->assertSame('phone', $field->field_type);
+
+        $this->getJson(route('document-types.fields', $documentType))
+            ->assertJsonPath('2.field_type', 'phone');
+
+        $this->post('/document-request', [
+            'document_type_id' => $documentType->id,
+            'full_name' => 'Taylor Student',
+            'email' => 'taylor@example.test',
+            'phone_number' => '09123456789',
+        ])->assertRedirect();
+
+        $this->assertDatabaseHas('document', [
+            'field_name' => 'phone_number',
+            'field_value' => '09123456789',
+        ]);
+
+        $this->from('/document-request')
+            ->post('/document-request', [
+                'document_type_id' => $documentType->id,
+                'full_name' => 'Taylor Student',
+                'email' => 'taylor@example.test',
+                'phone_number' => '0912345678',
+            ])
+            ->assertRedirect('/document-request')
+            ->assertSessionHasErrors('phone_number');
+
+        $this->from('/document-request')
+            ->post('/document-request', [
+                'document_type_id' => $documentType->id,
+                'full_name' => 'Taylor Student',
+                'email' => 'taylor@example.test',
+                'phone_number' => '08123456789',
+            ])
+            ->assertRedirect('/document-request')
+            ->assertSessionHasErrors('phone_number');
 
         $this->assertDatabaseCount('document', 1);
     }

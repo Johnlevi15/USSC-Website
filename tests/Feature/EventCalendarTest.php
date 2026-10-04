@@ -48,4 +48,28 @@ class EventCalendarTest extends TestCase
             ->assertRedirect('/')
             ->assertSessionHasErrors('month');
     }
+
+    public function test_admin_event_deletion_uses_the_admin_confirmation_modal(): void
+    {
+        $admin = Admin::create([
+            'name' => 'Calendar Admin',
+            'email' => 'calendar-admin@example.test',
+            'password_hash' => 'unused',
+        ]);
+
+        Event::create([
+            'title' => 'Campus Fair',
+            'event_date' => '2026-10-15',
+            'start_time' => '09:00',
+            'end_time' => '16:00',
+            'created_by' => $admin->admin_id,
+        ]);
+
+        $this->actingAs($admin, 'admin')
+            ->get(route('admin.events'))
+            ->assertSee('id="admin-action-confirm-modal"', false)
+            ->assertSee('data-confirm-title="Delete event?"', false)
+            ->assertSee('data-confirm-message="Delete Campus Fair? It will also disappear from the student calendar."', false)
+            ->assertDontSee('confirm(\'Delete this event?');
+    }
 }

@@ -60,9 +60,9 @@
                                 <i class="fa-solid fa-pen-to-square"></i>
                                 Edit
                             </button>
-                            <form method="POST" action="{{ route('admin.document-types.fields.delete', $field) }}" onsubmit="return confirm('Delete this field?')">
+                            <form method="POST" action="{{ route('admin.document-types.fields.delete', $field) }}" class="document-field-delete-form" data-field-name="{{ $field->field_label }}">
                                 @csrf @method('DELETE')
-                                <button class="inline-flex w-full items-center justify-center gap-1.5 rounded-lg bg-red-700 px-3 py-2 text-xs font-bold text-white hover:bg-red-800">
+                                <button type="submit" class="inline-flex w-full items-center justify-center gap-1.5 rounded-lg bg-red-700 px-3 py-2 text-xs font-bold text-white hover:bg-red-800">
                                     <i class="fa-solid fa-trash"></i>
                                     Delete
                                 </button>
@@ -84,6 +84,7 @@
                                     <select required name="field_type" class="field-type-select mt-1 w-full rounded-lg border px-3 py-2 text-sm">
                                         <option value="text" @selected($field->field_type === 'text')>Text</option>
                                         <option value="email" @selected($field->field_type === 'email')>Email</option>
+                                        <option value="phone" @selected($field->field_type === 'phone')>Phone Number (Philippines)</option>
                                         <option value="textarea" @selected($field->field_type === 'textarea')>Textarea</option>
                                         <option value="number" @selected($field->field_type === 'number')>Number</option>
                                         <option value="date" @selected($field->field_type === 'date')>Date</option>
@@ -104,8 +105,8 @@
                                             <span class="mb-2 block font-bold text-gray-900">Basic rule examples</span>
                                             <span class="mb-1 block"><code class="font-semibold">max:255</code> — limit text to 255 characters.</span>
                                             <span class="mb-1 block"><code class="font-semibold">size:10</code> — require exactly 10 characters.</span>
-                                            <span class="mb-1 block"><code class="font-semibold">id:##-####</code> — ID mask; # means one digit, e.g. 24-0001.</span>
-                                            <span class="mt-2 block text-gray-500">Use a Text field for IDs and phone numbers to preserve leading zeroes. Combine rules with |, e.g. id:##-####|max:20.</span>
+                                            <span class="mb-1 block"><code class="font-semibold">id:##-####</code> — ID mask; e.g. 24-0001.</span>
+                                            <span class="mt-2 block text-gray-500">Combine rules with |, e.g. id:##-####|max:20.</span>
                                         </span>
                                     </span>
                                 </span>
@@ -170,6 +171,7 @@
                         <select required name="field_type" class="field-type-select mt-1 w-full rounded-lg border px-3 py-2 text-sm">
                             <option value="text">Text</option>
                             <option value="email">Email</option>
+                            <option value="phone">Phone Number (Philippines)</option>
                             <option value="textarea">Textarea</option>
                             <option value="number">Number</option>
                             <option value="date">Date</option>
@@ -190,8 +192,8 @@
                                 <span class="mb-2 block font-bold text-gray-900">Basic rule examples</span>
                                 <span class="mb-1 block"><code class="font-semibold">max:255</code> — limit text to 255 characters.</span>
                                 <span class="mb-1 block"><code class="font-semibold">size:10</code> — require exactly 10 characters.</span>
-                                <span class="mb-1 block"><code class="font-semibold">id:##-####</code> — ID mask; # means one digit, e.g. 24-0001.</span>
-                                <span class="mt-2 block text-gray-500">Use a Text field for IDs and phone numbers to preserve leading zeroes. Combine rules with |, e.g. id:##-####|max:20.</span>
+                                <span class="mb-1 block"><code class="font-semibold">id:##-####</code> — ID mask; e.g. 24-0001.</span>
+                                <span class="mt-2 block text-gray-500">Combine rules with |, e.g. id:##-####|max:20.</span>
                             </span>
                         </span>
                     </span>
@@ -233,6 +235,23 @@
         </div>
     </div>
 </div>
+
+<div id="deleteDocumentFieldModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-gray-900/35 p-4 backdrop-blur-[1px]" role="dialog" aria-modal="true" aria-labelledby="deleteDocumentFieldTitle">
+    <div class="w-full max-w-md rounded-xl bg-white shadow-xl">
+        <div class="border-b px-5 py-4">
+            <h2 id="deleteDocumentFieldTitle" class="text-lg font-bold text-gray-900">Delete Form Field?</h2>
+            <p class="mt-1 text-sm text-gray-500">This action cannot be undone.</p>
+        </div>
+        <div class="p-5">
+            <p class="text-sm text-gray-700">You are about to delete <span id="deleteDocumentFieldName" class="font-bold text-gray-900"></span>.</p>
+        </div>
+        <div class="flex flex-col-reverse gap-2 border-t bg-gray-50 px-5 py-4 sm:flex-row sm:justify-end">
+            <button type="button" id="cancelDeleteDocumentField" class="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-bold text-gray-700 hover:bg-gray-50">Cancel</button>
+            <button type="button" id="confirmDeleteDocumentField" class="rounded-lg bg-red-900 px-4 py-2 text-sm font-bold text-white hover:bg-red-800">Delete field</button>
+        </div>
+    </div>
+</div>
+
 <script>
     function toggleFieldEditor(id) {
         document.getElementById(id).classList.toggle('hidden');
@@ -404,5 +423,45 @@
     }
 
     document.querySelectorAll('form').forEach(initializeFieldEditor);
+
+    const deleteDocumentFieldModal = document.getElementById('deleteDocumentFieldModal');
+    const deleteDocumentFieldName = document.getElementById('deleteDocumentFieldName');
+    const cancelDeleteDocumentField = document.getElementById('cancelDeleteDocumentField');
+    const confirmDeleteDocumentField = document.getElementById('confirmDeleteDocumentField');
+    let pendingDocumentFieldDeleteForm = null;
+
+    function closeDeleteDocumentFieldModal() {
+        deleteDocumentFieldModal.classList.add('hidden');
+        deleteDocumentFieldModal.classList.remove('flex');
+        pendingDocumentFieldDeleteForm = null;
+    }
+
+    document.querySelectorAll('.document-field-delete-form').forEach((form) => {
+        form.addEventListener('submit', (event) => {
+            event.preventDefault();
+            pendingDocumentFieldDeleteForm = form;
+            deleteDocumentFieldName.textContent = form.dataset.fieldName || 'this field';
+            deleteDocumentFieldModal.classList.remove('hidden');
+            deleteDocumentFieldModal.classList.add('flex');
+            confirmDeleteDocumentField.focus();
+        });
+    });
+
+    cancelDeleteDocumentField.addEventListener('click', closeDeleteDocumentFieldModal);
+    deleteDocumentFieldModal.addEventListener('click', (event) => {
+        if (event.target === deleteDocumentFieldModal) {
+            closeDeleteDocumentFieldModal();
+        }
+    });
+    document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape' && ! deleteDocumentFieldModal.classList.contains('hidden')) {
+            closeDeleteDocumentFieldModal();
+        }
+    });
+    confirmDeleteDocumentField.addEventListener('click', () => {
+        if (pendingDocumentFieldDeleteForm) {
+            pendingDocumentFieldDeleteForm.submit();
+        }
+    });
 </script>
 @endsection

@@ -127,6 +127,18 @@
     @endif
     @yield('content')
 </main>
+<div id="admin-action-confirm-modal" class="fixed inset-0 z-[100] hidden items-center justify-center bg-gray-900/35 p-4 backdrop-blur-[1px]" role="dialog" aria-modal="true" aria-labelledby="admin-action-confirm-title" aria-describedby="admin-action-confirm-message">
+    <div class="w-full max-w-md rounded-xl bg-white shadow-xl">
+        <div class="border-b px-5 py-4">
+            <h2 id="admin-action-confirm-title" class="text-lg font-bold text-gray-900">Confirm action</h2>
+            <p id="admin-action-confirm-message" class="mt-1 text-sm text-gray-600"></p>
+        </div>
+        <div class="flex flex-col-reverse gap-2 border-t bg-gray-50 px-5 py-4 sm:flex-row sm:justify-end">
+            <button type="button" id="cancel-admin-action" class="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-bold text-gray-700 hover:bg-gray-50">Cancel</button>
+            <button type="button" id="confirm-admin-action" class="rounded-lg bg-red-900 px-4 py-2 text-sm font-bold text-white hover:bg-red-800">Confirm</button>
+        </div>
+    </div>
+</div>
 <script>
     document.addEventListener('DOMContentLoaded', () => {
         const adminMenuToggle = document.getElementById('admin-menu-toggle');
@@ -157,6 +169,52 @@
         document.addEventListener('keydown', (event) => {
             if (event.key === 'Escape' && adminMenuPanel.getAttribute('aria-hidden') === 'false') {
                 closeAdminMenu();
+            }
+        });
+
+        const actionModal = document.getElementById('admin-action-confirm-modal');
+        const actionTitle = document.getElementById('admin-action-confirm-title');
+        const actionMessage = document.getElementById('admin-action-confirm-message');
+        const cancelActionButton = document.getElementById('cancel-admin-action');
+        const confirmActionButton = document.getElementById('confirm-admin-action');
+        let pendingActionForm = null;
+        let actionTrigger = null;
+
+        function closeActionModal() {
+            actionModal.classList.add('hidden');
+            actionModal.classList.remove('flex');
+            pendingActionForm = null;
+            actionTrigger?.focus();
+        }
+
+        document.querySelectorAll('form[data-confirm-message]').forEach((form) => {
+            form.addEventListener('submit', (event) => {
+                event.preventDefault();
+                pendingActionForm = form;
+                actionTrigger = event.submitter;
+                actionTitle.textContent = form.dataset.confirmTitle || 'Confirm action';
+                actionMessage.textContent = form.dataset.confirmMessage;
+                confirmActionButton.textContent = form.dataset.confirmButton || 'Confirm';
+                actionModal.classList.remove('hidden');
+                actionModal.classList.add('flex');
+                confirmActionButton.focus();
+            });
+        });
+
+        cancelActionButton.addEventListener('click', closeActionModal);
+        actionModal.addEventListener('click', (event) => {
+            if (event.target === actionModal) {
+                closeActionModal();
+            }
+        });
+        document.addEventListener('keydown', (event) => {
+            if (event.key === 'Escape' && ! actionModal.classList.contains('hidden')) {
+                closeActionModal();
+            }
+        });
+        confirmActionButton.addEventListener('click', () => {
+            if (pendingActionForm) {
+                pendingActionForm.submit();
             }
         });
     });

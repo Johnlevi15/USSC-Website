@@ -84,7 +84,9 @@
 
                             <form method="POST"
                                   action="{{ route('admin.events.destroy', $event) }}"
-                                  onsubmit="return confirm('Delete this event? It will also disappear from the student calendar.');">
+                                  data-confirm-title="Delete event?"
+                                  data-confirm-message="Delete {{ $event->title }}? It will also disappear from the student calendar."
+                                  data-confirm-button="Delete event">
                                 @csrf
                                 @method('DELETE')
                                 <button type="submit"

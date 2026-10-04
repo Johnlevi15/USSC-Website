@@ -239,16 +239,9 @@ documentTypeSelect.addEventListener('change', async function() {
                 input = document.createElement('textarea');
                 input.rows = 3;
             } else if (field.field_type === 'select') {
-                const searchInput = document.createElement('input');
-                searchInput.type = 'search';
-                searchInput.setAttribute('aria-label', `Search ${field.field_label}`);
-                searchInput.placeholder = 'Search by college or program...';
-                searchInput.className = 'mt-1 w-full rounded-lg border px-3 py-2 text-sm font-normal normal-case';
-                wrapper.appendChild(searchInput);
-
                 input = document.createElement('select');
                 input.setAttribute('aria-label', field.field_label);
-                input.className = 'mt-2 w-full rounded-lg border px-3 py-2 text-sm font-normal normal-case';
+                input.className = 'mt-1 w-full rounded-lg border px-3 py-2 text-sm font-normal normal-case';
                 const emptyOption = document.createElement('option');
                 emptyOption.value = '';
                 emptyOption.textContent = 'Select...';
@@ -287,48 +280,19 @@ documentTypeSelect.addEventListener('change', async function() {
                     }
                 });
 
-                const noMatchesMessage = document.createElement('span');
-                noMatchesMessage.className = 'mt-1 hidden text-xs font-normal normal-case text-gray-500';
-                noMatchesMessage.setAttribute('role', 'status');
-                noMatchesMessage.textContent = 'No matching options.';
-                wrapper.appendChild(noMatchesMessage);
-
-                searchInput.addEventListener('input', () => {
-                    const query = searchInput.value.trim().toLocaleLowerCase();
-                    let visibleOptions = 0;
-
-                    input.querySelectorAll('option').forEach(option => {
-                        if (option === emptyOption) {
-                            return;
-                        }
-
-                        const groupLabel = option.parentElement?.tagName === 'OPTGROUP'
-                            ? option.parentElement.label
-                            : '';
-                        const isVisible = ! query
-                            || option.textContent.toLocaleLowerCase().includes(query)
-                            || groupLabel.toLocaleLowerCase().includes(query);
-
-                        option.hidden = ! isVisible;
-                        visibleOptions += Number(isVisible);
-                    });
-
-                    optionGroups.forEach(optionGroup => {
-                        optionGroup.hidden = ! Array.from(optionGroup.options).some(option => ! option.hidden);
-                    });
-
-                    if (input.selectedOptions[0] && input.selectedOptions[0] !== emptyOption && input.selectedOptions[0].hidden) {
-                        input.value = '';
-                    }
-
-                    noMatchesMessage.classList.toggle('hidden', ! query || visibleOptions > 0);
-                });
             } else {
                 input = document.createElement('input');
-                input.type = field.field_type;
+                input.type = field.field_type === 'phone' ? 'tel' : field.field_type;
 
                 if (field.field_type === 'number') {
                     input.min = '0';
+                }
+
+                if (field.field_type === 'phone') {
+                    input.inputMode = 'numeric';
+                    input.maxLength = 11;
+                    input.pattern = '09[0-9]{9}';
+                    input.placeholder = '09XXXXXXXXX';
                 }
 
                 if (field.field_type === 'file') {

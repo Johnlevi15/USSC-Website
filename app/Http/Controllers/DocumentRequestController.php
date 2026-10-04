@@ -158,6 +158,9 @@ class DocumentRequestController extends Controller
                 } else {
                     $fieldRules[] = 'string';
                 }
+                if ($field->field_type === 'phone') {
+                    $fieldRules[] = 'regex:/^09[0-9]{9}$/';
+                }
                 if ($field->field_type === 'select') {
                     $fieldRules[] = Rule::in($this->selectOptionValues($field->field_options));
                 }

@@ -195,6 +195,39 @@ class LostFoundAdminReviewTest extends TestCase
         $this->assertNull($item->fresh()->archived_by);
     }
 
+    public function test_admin_restore_actions_use_the_admin_confirmation_modal(): void
+    {
+        $admin = Admin::create([
+            'name' => 'Portal Administrator',
+            'email' => 'admin@example.test',
+            'password_hash' => 'not-used',
+        ]);
+
+        $user = User::create([
+            'name' => 'Taylor Student',
+            'email' => 'taylor@example.test',
+        ]);
+
+        LostFoundItem::create([
+            'posted_by' => $user->id,
+            'item_name' => 'Archived Backpack',
+            'category' => 'Bag',
+            'description' => 'Blue backpack.',
+            'status' => 'found',
+            'approval_status' => 'approved',
+            'submitted_at' => now(),
+            'place' => 'Library',
+            'archived_at' => now(),
+            'archived_by' => $admin->admin_id,
+        ]);
+
+        $this->actingAs($admin, 'admin')
+            ->get(route('admin.lost-found.archive'))
+            ->assertSee('id="admin-action-confirm-modal"', false)
+            ->assertSee('data-confirm-title="Restore item?"', false)
+            ->assertSee('Restore Archived Backpack to the active Lost &amp; Found listings?', false);
+    }
+
     public function test_admin_can_update_lost_found_status_without_sending_email(): void
     {
         Mail::fake();

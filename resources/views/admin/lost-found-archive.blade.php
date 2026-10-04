@@ -63,7 +63,10 @@
                         <i class="fa-solid fa-eye"></i>
                         Review
                     </a>
-                    <form method="POST" action="{{ route('admin.lost-found.restore', $item) }}">
+                    <form method="POST" action="{{ route('admin.lost-found.restore', $item) }}"
+                          data-confirm-title="Restore item?"
+                          data-confirm-message="Restore {{ $item->item_name }} to the active Lost &amp; Found listings?"
+                          data-confirm-button="Restore item">
                         @csrf
                         @method('PATCH')
                         <button class="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-xs font-bold text-gray-700 hover:bg-gray-50">
