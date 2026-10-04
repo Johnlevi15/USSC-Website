@@ -188,13 +188,47 @@ class DocumentRequestFormTest extends TestCase
             ])
             ->assertRedirect('/document-request')
             ->assertSessionHasErrors([
-                'family_members' => 'The family members field must be at least 0.',
+                'family_members' => 'The family members field must be at least 1.',
             ]);
 
         $this->assertDatabaseCount('document_requests', 0);
     }
 
-    public function test_document_request_form_accepts_zero_for_number_fields(): void
+    public function test_document_request_form_rejects_zero_for_number_fields(): void
+    {
+        $documentType = DocumentType::create([
+            'name' => 'Scholarship Request',
+            'description' => 'Scholarship form',
+            'is_active' => true,
+        ]);
+
+        DocumentTypeField::create([
+            'document_type_id' => $documentType->id,
+            'field_name' => 'family_members',
+            'field_label' => 'Number of Family Members',
+            'field_type' => 'number',
+            'is_required' => true,
+            'display_order' => 1,
+        ]);
+
+        $this->from('/document-request')
+            ->post('/document-request', [
+                'document_type_id' => $documentType->id,
+                'full_name' => 'Taylor Student',
+                'email' => 'taylor@example.test',
+                'family_members' => '0',
+            ])
+            ->assertRedirect('/document-request')
+            ->assertSessionHasErrors([
+                'family_members' => 'The family members field must be at least 1.',
+            ]);
+
+        $this->assertDatabaseMissing('document', [
+            'field_name' => 'family_members',
+        ]);
+    }
+
+    public function test_document_request_form_accepts_one_for_number_fields(): void
     {
         $documentType = DocumentType::create([
             'name' => 'Scholarship Request',
@@ -215,12 +249,12 @@ class DocumentRequestFormTest extends TestCase
             'document_type_id' => $documentType->id,
             'full_name' => 'Taylor Student',
             'email' => 'taylor@example.test',
-            'family_members' => '0',
+            'family_members' => '1',
         ])->assertRedirect();
 
         $this->assertDatabaseHas('document', [
             'field_name' => 'family_members',
-            'field_value' => '0',
+            'field_value' => '1',
         ]);
     }
 

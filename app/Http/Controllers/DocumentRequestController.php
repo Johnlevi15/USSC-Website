@@ -154,7 +154,7 @@ class DocumentRequestController extends Controller
                 }
                 if ($field->field_type === 'number') {
                     $fieldRules[] = 'numeric';
-                    $fieldRules[] = 'min:0';
+                    $fieldRules[] = 'min:1';
                 } else {
                     $fieldRules[] = 'string';
                 }

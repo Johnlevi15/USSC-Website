@@ -285,7 +285,7 @@ documentTypeSelect.addEventListener('change', async function() {
                 input.type = field.field_type === 'phone' ? 'tel' : field.field_type;
 
                 if (field.field_type === 'number') {
-                    input.min = '0';
+                    input.min = '1';
                 }
 
                 if (field.field_type === 'phone') {
