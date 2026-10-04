@@ -118,8 +118,8 @@ class DocumentRequestController extends Controller
                     $rules[$field->field_name] = [
                         $field->is_required ? 'required' : 'nullable',
                         'file',
-                        'mimes:pdf,doc,docx,jpg,jpeg,png',
-                        'extensions:pdf,doc,docx,jpg,jpeg,png',
+                        'mimes:pdf,doc,docx',
+                        'extensions:pdf,doc,docx',
                         'max:5120',
                     ];
 
@@ -158,8 +158,11 @@ class DocumentRequestController extends Controller
                 } else {
                     $fieldRules[] = 'string';
                 }
-                if ($field->validation_rules) {
-                    $fieldRules[] = $field->validation_rules;
+                if ($field->field_type === 'select') {
+                    $fieldRules[] = Rule::in($this->selectOptionValues($field->field_options));
+                }
+                foreach ($this->customValidationRules($field->validation_rules) as $validationRule) {
+                    $fieldRules[] = $validationRule;
                 }
                 $rules[$field->field_name] = $fieldRules;
             }
@@ -359,6 +362,55 @@ class DocumentRequestController extends Controller
     private function hasOtherOption(?array $options): bool
     {
         return in_array('Other', $options ?? [], true);
+    }
+
+    /**
+     * @param  list<string>|null  $options
+     * @return list<string>
+     */
+    private function selectOptionValues(?array $options): array
+    {
+        return array_values(array_unique(array_map(
+            function (string $option): string {
+                $optionParts = explode(' > ', trim($option), 2);
+
+                if (count($optionParts) === 2 && trim($optionParts[0]) !== '' && trim($optionParts[1]) !== '') {
+                    return trim($optionParts[1]);
+                }
+
+                return trim($option);
+            },
+            $options ?? [],
+        )));
+    }
+
+    /**
+     * @return list<string>
+     */
+    private function customValidationRules(?string $validationRules): array
+    {
+        $rules = [];
+
+        foreach (explode('|', (string) $validationRules) as $rule) {
+            if (str_starts_with($rule, 'id_format:')) {
+                $format = substr($rule, strlen('id_format:'));
+                $pattern = '';
+
+                foreach (str_split($format) as $character) {
+                    $pattern .= $character === '#' ? '[0-9]' : preg_quote($character, '/');
+                }
+
+                $rules[] = 'regex:/^'.$pattern.'$/';
+
+                continue;
+            }
+
+            if ($rule !== '') {
+                $rules[] = $rule;
+            }
+        }
+
+        return $rules;
     }
 
     /**

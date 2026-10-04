@@ -97,7 +97,7 @@ class DocumentTypeController extends Controller
         $validated = $request->validate([
             'field_name' => ['nullable', 'string', 'max:100', 'regex:/^[a-z_]+$/'],
             'field_label' => ['required', 'string', 'max:150'],
-            'field_type' => ['required', 'in:text,email,textarea,number,date,select,checkbox,file,image'],
+            'field_type' => ['required', 'in:text,email,number,date,select,checkbox,file,image'],
             'field_options' => ['nullable', 'string', 'max:2000'],
             'is_required' => ['sometimes', 'boolean'],
             'validation_rules' => ['nullable', 'string', 'max:255'],
@@ -118,6 +118,10 @@ class DocumentTypeController extends Controller
         $validated['is_required'] = $request->boolean('is_required');
 
         $validated['field_options'] = $this->fieldOptions($validated);
+        $validated['validation_rules'] = $this->validationRules(
+            $validated['validation_rules'] ?? null,
+            $validated['field_type'],
+        );
 
         // Get the next display order
         $maxOrder = $documentType->fields()->max('display_order') ?? 0;
@@ -144,6 +148,10 @@ class DocumentTypeController extends Controller
         $validated['is_required'] = $request->boolean('is_required');
 
         $validated['field_options'] = $this->fieldOptions($validated);
+        $validated['validation_rules'] = $this->validationRules(
+            $validated['validation_rules'] ?? null,
+            $validated['field_type'],
+        );
 
         $field->update($validated);
 
@@ -248,6 +256,60 @@ class DocumentTypeController extends Controller
             fn (string $option): string => trim($option),
             $options,
         ), fn (string $option): bool => $option !== ''));
+    }
+
+    private function validationRules(?string $validationRules, string $fieldType): ?string
+    {
+        $validationRules = trim((string) $validationRules);
+        if ($validationRules === '') {
+            return null;
+        }
+
+        $rules = [];
+        $idFormatCount = 0;
+
+        foreach (explode('|', $validationRules) as $rule) {
+            $rule = trim($rule);
+            if (str_starts_with($rule, 'id:') || str_starts_with($rule, 'id_format:')) {
+                $format = substr($rule, str_starts_with($rule, 'id:') ? 3 : strlen('id_format:'));
+                $idFormatCount++;
+
+                if ($fieldType !== 'text') {
+                    throw ValidationException::withMessages([
+                        'validation_rules' => 'ID formats can only be used with Text fields.',
+                    ]);
+                }
+
+                if (! str_contains($format, '#') || preg_match('/^[A-Za-z0-9# ._\/-]+$/', $format) !== 1) {
+                    throw ValidationException::withMessages([
+                        'validation_rules' => 'Use id: followed by a format with # for digits, such as id:##-####.',
+                    ]);
+                }
+
+                $rules[] = 'id_format:'.$format;
+
+                continue;
+            }
+
+            if ($rule !== '') {
+                $rules[] = $rule;
+            }
+        }
+
+        if ($idFormatCount > 1) {
+            throw ValidationException::withMessages([
+                'validation_rules' => 'Enter only one ID format rule.',
+            ]);
+        }
+
+        $normalizedRules = implode('|', $rules);
+        if (strlen($normalizedRules) > 255) {
+            throw ValidationException::withMessages([
+                'validation_rules' => 'The validation rules are too long.',
+            ]);
+        }
+
+        return $normalizedRules !== '' ? $normalizedRules : null;
     }
 
     private function isBaseField(string $fieldName, string $fieldLabel): bool

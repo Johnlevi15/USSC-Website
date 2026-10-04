@@ -116,7 +116,7 @@
 </aside>
 
 <main class="mx-auto max-w-7xl space-y-6 p-4 md:p-6">
-    @if(session('success') && ! request()->routeIs('admin.lost-found*'))
+    @if(session('success') && ! request()->routeIs('admin.lost-found*') && ! request()->routeIs('admin.documents.review'))
         <div class="rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">{{ session('success') }}</div>
     @endif
     @if(session('error'))

@@ -38,6 +38,9 @@
         @else
             <div id="fields-list" class="space-y-2 mb-6">
                 @foreach($documentType->fields as $field)
+                @php
+                    $fieldValidationRules = str_replace('id_format:', 'id:', $field->validation_rules ?? '');
+                @endphp
                 <div class="rounded-lg border bg-gray-50 text-sm" data-id="{{ $field->id }}">
                     <div class="flex flex-col gap-3 px-4 py-3 sm:flex-row sm:items-center">
                         <div class="flex min-w-0 flex-1 items-start gap-3">
@@ -92,16 +95,45 @@
                                 </label>
                             </div>
 
-                            <label class="block text-xs font-bold text-gray-600 uppercase">
-                                Validation Rules (optional)
-                                <input name="validation_rules" value="{{ $field->validation_rules }}" placeholder="e.g. max:255" class="mt-1 w-full rounded-lg border px-3 py-2 text-sm">
-                            </label>
+                            <div class="block text-xs font-bold text-gray-600 uppercase">
+                                <span class="flex items-center gap-1.5">
+                                    Validation Rules (optional)
+                                    <span class="group relative inline-flex normal-case">
+                                        <button type="button" aria-label="Show validation rule examples" aria-describedby="validation-rule-help-{{ $field->id }}" class="inline-flex h-4 w-4 items-center justify-center rounded-full border border-gray-400 text-[10px] font-bold text-gray-600 hover:border-red-800 hover:text-red-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-800">?</button>
+                                        <span id="validation-rule-help-{{ $field->id }}" role="tooltip" class="invisible absolute left-0 top-full z-50 mt-2 w-72 rounded-lg border border-gray-200 bg-white p-3 text-left text-xs font-normal normal-case text-gray-700 opacity-0 shadow-lg transition group-hover:visible group-hover:opacity-100 group-focus-within:visible group-focus-within:opacity-100">
+                                            <span class="mb-2 block font-bold text-gray-900">Basic rule examples</span>
+                                            <span class="mb-1 block"><code class="font-semibold">max:255</code> — limit text to 255 characters.</span>
+                                            <span class="mb-1 block"><code class="font-semibold">size:10</code> — require exactly 10 characters.</span>
+                                            <span class="mb-1 block"><code class="font-semibold">id:##-####</code> — ID mask; # means one digit, e.g. 24-0001.</span>
+                                            <span class="mt-2 block text-gray-500">Use a Text field for IDs and phone numbers to preserve leading zeroes. Combine rules with |, e.g. id:##-####|max:20.</span>
+                                        </span>
+                                    </span>
+                                </span>
+                                <input id="validation-rules-{{ $field->id }}" name="validation_rules" value="{{ $fieldValidationRules }}" placeholder="e.g. id:##-#### or max:255|alpha_num" aria-describedby="validation-rule-help-{{ $field->id }}" class="mt-1 w-full rounded-lg border px-3 py-2 text-sm font-normal normal-case">
+                            </div>
 
-                            <label class="field-options-wrapper hidden text-xs font-bold text-gray-600 uppercase">
-                                Options for Select or Checkbox
-                                <textarea name="field_options" rows="4" placeholder="Option 1&#10;Option 2&#10;Other" class="field-options mt-1 w-full rounded-lg border px-3 py-2 text-sm">{{ $field->field_options ? implode("\n", $field->field_options) : '' }}</textarea>
-                                <span class="text-[10px] text-gray-400 normal-case">Enter one option per line. Use "Other" to let users type a custom answer.</span>
-                            </label>
+                            <div class="field-options-wrapper hidden space-y-3">
+                                <div class="select-options-builder hidden space-y-3 rounded-lg border border-gray-200 bg-gray-50 p-3">
+                                    <div>
+                                        <p class="text-xs font-bold text-gray-700">Group options</p>
+                                        <p class="mt-1 text-[11px] font-normal normal-case text-gray-500">Add a group, then list the options in it. Options such as “Other” can be added outside groups.</p>
+                                    </div>
+                                    <div class="option-groups space-y-3"></div>
+                                    <button type="button" class="add-option-group rounded-lg border border-gray-300 bg-white px-3 py-2 text-xs font-bold text-gray-700 hover:bg-gray-100">+ Add a group</button>
+                                    <div class="border-t border-gray-200 pt-3">
+                                        <p class="text-xs font-bold text-gray-700">Options outside groups</p>
+                                        <div class="flat-options-list mt-2 space-y-2"></div>
+                                        <button type="button" class="add-flat-option mt-2 rounded-lg border border-gray-300 bg-white px-3 py-2 text-xs font-bold text-gray-700 hover:bg-gray-100">+ Add standalone option</button>
+                                    </div>
+                                </div>
+                                <div class="field-options-textarea-wrapper">
+                                    <label class="block text-xs font-bold text-gray-600">
+                                        Options (one per line)
+                                        <textarea name="field_options" rows="4" placeholder="Option 1&#10;Other" class="field-options mt-1 w-full rounded-lg border px-3 py-2 text-sm font-normal normal-case">{{ $field->field_options ? implode("\n", $field->field_options) : '' }}</textarea>
+                                    </label>
+                                    <span class="field-options-help text-[10px] font-normal normal-case text-gray-400">Enter one option per line. Use "Other" to let users type a custom answer.</span>
+                                </div>
+                            </div>
 
                             <label class="flex items-center gap-2 text-sm font-semibold text-gray-700">
                                 <input type="checkbox" name="is_required" value="1" @checked($field->is_required) class="rounded">
@@ -126,7 +158,7 @@
                 @csrf
 
                 <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                    <label class="block text-xs font-bold text-gray-600 uppercase">
+                    <div class="block text-xs font-bold text-gray-600 uppercase">
                         Field Label (display)
                         <input required name="field_label" placeholder="e.g. Student ID Number" class="mt-1 w-full rounded-lg border px-3 py-2 text-sm">
                     </label>
@@ -147,17 +179,47 @@
                             <option value="image">Image Upload</option>
                         </select>
                     </label>
-                    <label class="block text-xs font-bold text-gray-600 uppercase">
-                        Validation Rules (optional)
-                        <input name="validation_rules" placeholder="e.g. max:255" class="mt-1 w-full rounded-lg border px-3 py-2 text-sm">
-                    </label>
                 </div>
 
-                <label class="field-options-wrapper hidden text-xs font-bold text-gray-600 uppercase">
-                    Options for Select or Checkbox
-                    <textarea name="field_options" rows="4" placeholder="Option 1&#10;Option 2&#10;Other" class="field-options mt-1 w-full rounded-lg border px-3 py-2 text-sm"></textarea>
-                    <span class="text-[10px] text-gray-400 normal-case">Enter one option per line. Use "Other" to let users type a custom answer.</span>
-                </label>
+                <label class="block text-xs font-bold text-gray-600 uppercase">
+                    <span class="flex items-center gap-1.5">
+                        Validation Rules (optional)
+                        <span class="group relative inline-flex normal-case">
+                            <button type="button" aria-label="Show validation rule examples" aria-describedby="validation-rule-help-new" class="inline-flex h-4 w-4 items-center justify-center rounded-full border border-gray-400 text-[10px] font-bold text-gray-600 hover:border-red-800 hover:text-red-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-800">?</button>
+                            <span id="validation-rule-help-new" role="tooltip" class="invisible absolute left-0 top-full z-50 mt-2 w-72 rounded-lg border border-gray-200 bg-white p-3 text-left text-xs font-normal normal-case text-gray-700 opacity-0 shadow-lg transition group-hover:visible group-hover:opacity-100 group-focus-within:visible group-focus-within:opacity-100">
+                                <span class="mb-2 block font-bold text-gray-900">Basic rule examples</span>
+                                <span class="mb-1 block"><code class="font-semibold">max:255</code> — limit text to 255 characters.</span>
+                                <span class="mb-1 block"><code class="font-semibold">size:10</code> — require exactly 10 characters.</span>
+                                <span class="mb-1 block"><code class="font-semibold">id:##-####</code> — ID mask; # means one digit, e.g. 24-0001.</span>
+                                <span class="mt-2 block text-gray-500">Use a Text field for IDs and phone numbers to preserve leading zeroes. Combine rules with |, e.g. id:##-####|max:20.</span>
+                            </span>
+                        </span>
+                    </span>
+                    <input id="validation-rules-new" name="validation_rules" placeholder="e.g. id:##-#### or max:255|alpha_num" aria-describedby="validation-rule-help-new" class="mt-1 w-full rounded-lg border px-3 py-2 text-sm font-normal normal-case">
+                </div>
+
+                <div class="field-options-wrapper hidden space-y-3">
+                    <div class="select-options-builder hidden space-y-3 rounded-lg border border-gray-200 bg-gray-50 p-3">
+                        <div>
+                            <p class="text-xs font-bold text-gray-700">Group options</p>
+                            <p class="mt-1 text-[11px] font-normal normal-case text-gray-500">Add a group, then list the options in it. Options such as “Other” can be added outside groups.</p>
+                        </div>
+                        <div class="option-groups space-y-3"></div>
+                        <button type="button" class="add-option-group rounded-lg border border-gray-300 bg-white px-3 py-2 text-xs font-bold text-gray-700 hover:bg-gray-100">+ Add a group</button>
+                        <div class="border-t border-gray-200 pt-3">
+                            <p class="text-xs font-bold text-gray-700">Options outside groups</p>
+                            <div class="flat-options-list mt-2 space-y-2"></div>
+                            <button type="button" class="add-flat-option mt-2 rounded-lg border border-gray-300 bg-white px-3 py-2 text-xs font-bold text-gray-700 hover:bg-gray-100">+ Add standalone option</button>
+                        </div>
+                    </div>
+                    <div class="field-options-textarea-wrapper">
+                        <label class="block text-xs font-bold text-gray-600">
+                            Options (one per line)
+                            <textarea name="field_options" rows="4" placeholder="Option 1&#10;Other" class="field-options mt-1 w-full rounded-lg border px-3 py-2 text-sm font-normal normal-case"></textarea>
+                        </label>
+                        <span class="field-options-help text-[10px] font-normal normal-case text-gray-400">Enter one option per line. Use "Other" to let users type a custom answer.</span>
+                    </div>
+                </div>
 
                 <label class="flex items-center gap-2 text-sm font-semibold text-gray-700">
                     <input type="checkbox" name="is_required" value="1" class="rounded">
@@ -180,10 +242,14 @@
         const form = select.closest('form');
         const fieldOptionsWrapper = form.querySelector('.field-options-wrapper');
         const fieldOptions = form.querySelector('.field-options');
+        const fieldOptionsTextareaWrapper = form.querySelector('.field-options-textarea-wrapper');
+        const selectOptionsBuilder = form.querySelector('.select-options-builder');
         const acceptsOptions = ['select', 'checkbox'].includes(select.value);
+        const isSelect = select.value === 'select';
 
         fieldOptionsWrapper.classList.toggle('hidden', ! acceptsOptions);
-        fieldOptionsWrapper.classList.toggle('block', acceptsOptions);
+        fieldOptionsTextareaWrapper.classList.toggle('hidden', isSelect);
+        selectOptionsBuilder.classList.toggle('hidden', ! isSelect);
         fieldOptions.disabled = ! acceptsOptions;
 
         if (! acceptsOptions) {
@@ -191,10 +257,152 @@
         }
     }
 
-    document.querySelectorAll('.field-type-select').forEach((select) => {
-        select.addEventListener('change', () => toggleFieldOptions(select));
-        toggleFieldOptions(select);
-    });
+    function createOptionInput(value, placeholder, onChange, onRemove) {
+        const row = document.createElement('div');
+        row.className = 'flex items-center gap-2';
 
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.value = value;
+        input.placeholder = placeholder;
+        input.className = 'min-w-0 flex-1 rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-normal normal-case';
+        input.addEventListener('input', onChange);
+
+        const removeButton = document.createElement('button');
+        removeButton.type = 'button';
+        removeButton.textContent = 'Remove';
+        removeButton.className = 'rounded-lg px-2 py-2 text-xs font-semibold text-red-700 hover:bg-red-50';
+        removeButton.addEventListener('click', onRemove);
+
+        row.append(input, removeButton);
+        return { row, input };
+    }
+
+    function initializeFieldEditor(form) {
+        const fieldTypeSelect = form.querySelector('.field-type-select');
+        if (!fieldTypeSelect) {
+            return;
+        }
+
+        const fieldOptions = form.querySelector('.field-options');
+        const groupsContainer = form.querySelector('.option-groups');
+        const flatOptionsContainer = form.querySelector('.flat-options-list');
+        const addGroupButton = form.querySelector('.add-option-group');
+        const addFlatOptionButton = form.querySelector('.add-flat-option');
+        function syncOptions() {
+            const options = [];
+
+            groupsContainer.querySelectorAll('.option-group-card').forEach((group) => {
+                const groupName = group.querySelector('.option-group-name').value.trim();
+                group.querySelectorAll('.group-option').forEach((optionInput) => {
+                    const option = optionInput.value.trim();
+                    if (groupName && option) {
+                        options.push(`${groupName} > ${option}`);
+                    }
+                });
+            });
+
+            flatOptionsContainer.querySelectorAll('.flat-option').forEach((optionInput) => {
+                if (optionInput.value.trim()) {
+                    options.push(optionInput.value.trim());
+                }
+            });
+
+            fieldOptions.value = options.join('\n');
+        }
+
+        function addGroupOption(group, value = '') {
+            const optionList = group.querySelector('.option-group-values');
+            const { row, input } = createOptionInput(value, 'Option name', syncOptions, () => {
+                row.remove();
+                syncOptions();
+            });
+            input.classList.add('group-option');
+            optionList.appendChild(row);
+        }
+
+        function addGroup(groupName = '', options = []) {
+            const group = document.createElement('section');
+            group.className = 'option-group-card space-y-2 rounded-lg border border-gray-200 bg-white p-3';
+
+            const groupNameLabel = document.createElement('label');
+            groupNameLabel.className = 'block text-xs font-semibold text-gray-700';
+            groupNameLabel.textContent = 'Group name';
+
+            const groupNameInput = document.createElement('input');
+            groupNameInput.type = 'text';
+            groupNameInput.value = groupName;
+            groupNameInput.placeholder = 'e.g. Year level or Category';
+            groupNameInput.className = 'option-group-name mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm font-normal';
+            groupNameInput.addEventListener('input', syncOptions);
+            groupNameLabel.appendChild(groupNameInput);
+
+            const optionList = document.createElement('div');
+            optionList.className = 'option-group-values space-y-2';
+
+            const actions = document.createElement('div');
+            actions.className = 'flex flex-wrap gap-2';
+
+            const addOptionButton = document.createElement('button');
+            addOptionButton.type = 'button';
+            addOptionButton.textContent = '+ Add option';
+            addOptionButton.className = 'rounded-lg border border-gray-300 px-3 py-2 text-xs font-semibold text-gray-700 hover:bg-gray-50';
+            addOptionButton.addEventListener('click', () => addGroupOption(group));
+
+            const removeGroupButton = document.createElement('button');
+            removeGroupButton.type = 'button';
+            removeGroupButton.textContent = 'Remove group';
+            removeGroupButton.className = 'rounded-lg px-3 py-2 text-xs font-semibold text-red-700 hover:bg-red-50';
+            removeGroupButton.addEventListener('click', () => {
+                group.remove();
+                syncOptions();
+            });
+
+            actions.append(addOptionButton, removeGroupButton);
+            group.append(groupNameLabel, optionList, actions);
+            groupsContainer.appendChild(group);
+            (options.length ? options : ['']).forEach((option) => addGroupOption(group, option));
+        }
+
+        function addFlatOption(value = '') {
+            const { row, input } = createOptionInput(value, 'e.g. Other', syncOptions, () => {
+                row.remove();
+                syncOptions();
+            });
+            input.classList.add('flat-option');
+            flatOptionsContainer.appendChild(row);
+        }
+
+        fieldOptions.value.split(/\r?\n/).forEach((line) => {
+            const separatorIndex = line.indexOf(' > ');
+            if (separatorIndex > 0) {
+                const groupName = line.slice(0, separatorIndex).trim();
+                const option = line.slice(separatorIndex + 3).trim();
+                const existingGroup = Array.from(groupsContainer.querySelectorAll('.option-group-card'))
+                    .find((group) => group.querySelector('.option-group-name').value === groupName);
+
+                if (existingGroup) {
+                    addGroupOption(existingGroup, option);
+                } else {
+                    addGroup(groupName, [option]);
+                }
+            } else if (line.trim()) {
+                addFlatOption(line.trim());
+            }
+        });
+
+        addGroupButton.addEventListener('click', () => addGroup());
+        addFlatOptionButton.addEventListener('click', () => addFlatOption());
+        fieldTypeSelect.addEventListener('change', () => {
+            toggleFieldOptions(fieldTypeSelect);
+        });
+        toggleFieldOptions(fieldTypeSelect);
+
+        form.addEventListener('submit', () => {
+            syncOptions();
+        });
+    }
+
+    document.querySelectorAll('form').forEach(initializeFieldEditor);
 </script>
 @endsection

@@ -3,28 +3,42 @@
 @section('content')
 <div>
     <h2 class="text-2xl font-extrabold text-gray-900">Review Document Requests</h2>
-    <p class="text-sm text-gray-500">Open a request to review the student's submitted information before updating its status.</p>
+    <p class="text-sm text-gray-500">Review pending requests, then manage processed requests separately.</p>
 </div>
 
-<div class="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
-    <div class="overflow-x-auto">
-        <table class="w-full min-w-[760px] text-left text-sm">
-            <thead class="border-b bg-gray-50 text-[10px] uppercase tracking-wider text-gray-500">
-                <tr>
-                    <th class="p-4">Requester</th>
-                    <th class="p-4">Document</th>
-                    <th class="p-4">Submitted</th>
-                    <th class="p-4">Status</th>
-                    <th class="p-4 text-right">Action</th>
-                </tr>
-            </thead>
-            <tbody id="document-requests-table" class="divide-y">
-                @include('admin.partials.document-request-rows', ['requests' => $requests])
-            </tbody>
-        </table>
+<section class="space-y-4">
+    <div class="flex items-center justify-between">
+        <div>
+            <h3 class="text-lg font-bold">Pending Requests</h3>
+            <p class="text-xs text-gray-500">These requests are waiting for review.</p>
+        </div>
+        <span id="pending-document-request-count" class="rounded-full bg-yellow-100 px-3 py-1 text-xs font-bold text-yellow-800">{{ $pendingRequests->count() }} pending</span>
     </div>
-    <div class="border-t p-4">{{ $requests->links() }}</div>
-</div>
+
+    <div id="pending-document-requests" class="grid grid-cols-1 gap-4 md:grid-cols-2">
+        @include('admin.partials.document-request-list', [
+            'requests' => $pendingRequests,
+            'emptyMessage' => 'No pending document requests.',
+        ])
+    </div>
+</section>
+
+<section class="mt-8 space-y-4 border-t border-gray-200 pt-6">
+    <div class="flex items-center justify-between">
+        <div>
+            <h3 class="text-lg font-bold">Processed Requests</h3>
+            <p class="text-xs text-gray-500">Requests that are under review, approved, ready, or rejected.</p>
+        </div>
+        <span id="processed-document-request-count" class="rounded-full bg-gray-100 px-3 py-1 text-xs font-bold text-gray-700">{{ $processedRequests->count() }} processed</span>
+    </div>
+
+    <div id="processed-document-requests" class="space-y-3">
+        @include('admin.partials.document-request-list', [
+            'requests' => $processedRequests,
+            'emptyMessage' => 'No processed document requests yet.',
+        ])
+    </div>
+</section>
 @endsection
 
 @push('scripts')
@@ -42,9 +56,12 @@
             }
 
             const data = await response.json();
-            document.getElementById('document-requests-table').innerHTML = data.html;
+            document.getElementById('pending-document-requests').innerHTML = data.pending_html;
+            document.getElementById('processed-document-requests').innerHTML = data.processed_html;
+            document.getElementById('pending-document-request-count').textContent = `${data.pending_count} pending`;
+            document.getElementById('processed-document-request-count').textContent = `${data.processed_count} processed`;
         } catch (error) {
-            // Keep the current table visible if a refresh fails.
+            // Keep the current sections visible if a refresh fails.
         }
     }
 

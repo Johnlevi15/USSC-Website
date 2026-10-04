@@ -224,6 +224,51 @@ class DocumentRequestFormTest extends TestCase
         ]);
     }
 
+    public function test_admin_can_add_grouped_select_options(): void
+    {
+        $admin = Admin::create([
+            'name' => 'Portal Administrator',
+            'email' => 'admin@example.test',
+            'password_hash' => 'not-used',
+        ]);
+
+        $documentType = DocumentType::create([
+            'name' => 'Enrollment Request',
+            'description' => 'Enrollment form',
+            'is_active' => true,
+        ]);
+
+        $this->actingAs($admin, 'admin')
+            ->get(route('admin.document-types.edit', $documentType))
+            ->assertSee('Group options')
+            ->assertSee('+ Add a group')
+            ->assertSee('id:##-####')
+            ->assertSee('Validation Rules (optional)')
+            ->assertSee('Show validation rule examples')
+            ->assertSee('max:255')
+            ->assertSee('size:10')
+            ->assertDontSee('require a valid email address')
+            ->assertDontSee('regex:/^[0-9]{10}$/');
+
+        $this->actingAs($admin, 'admin')
+            ->post(route('admin.document-types.fields.add', $documentType), [
+                'field_name' => 'college_program',
+                'field_label' => 'College / Program',
+                'field_type' => 'select',
+                'field_options' => 'College of Engineering > Bachelor of Science in Information Technology',
+                'is_required' => '1',
+            ])
+            ->assertRedirect();
+
+        $this->assertDatabaseHas('document_type_fields', [
+            'document_type_id' => $documentType->id,
+            'field_name' => 'college_program',
+            'field_options' => json_encode([
+                'College of Engineering > Bachelor of Science in Information Technology',
+            ]),
+        ]);
+    }
+
     public function test_admin_can_create_a_checkbox_field_for_a_document_type(): void
     {
         $admin = Admin::create([
@@ -319,6 +364,91 @@ class DocumentRequestFormTest extends TestCase
             'field_label' => 'Student ID Number',
             'field_type' => 'text',
             'is_required' => true,
+        ]);
+    }
+
+    public function test_admin_id_format_is_applied_to_document_request_values(): void
+    {
+        $admin = Admin::create([
+            'name' => 'Portal Administrator',
+            'email' => 'admin@example.test',
+            'password_hash' => 'not-used',
+        ]);
+
+        $documentType = DocumentType::create([
+            'name' => 'Scholarship Request',
+            'description' => 'Scholarship form',
+            'is_active' => true,
+        ]);
+
+        $this->actingAs($admin, 'admin')
+            ->post(route('admin.document-types.fields.add', $documentType), [
+                'field_label' => 'Student ID Number',
+                'field_type' => 'text',
+                'validation_rules' => 'id:##-####',
+                'is_required' => '1',
+            ])
+            ->assertRedirect();
+
+        $field = $documentType->fields()->where('field_name', 'student_id_number')->firstOrFail();
+        $this->assertSame('id_format:##-####', $field->validation_rules);
+
+        $this->actingAs($admin, 'admin')
+            ->get(route('admin.document-types.edit', $documentType))
+            ->assertSee('value="id:##-####"', false);
+
+        $this->post('/document-request', [
+            'document_type_id' => $documentType->id,
+            'full_name' => 'Taylor Student',
+            'email' => 'taylor@example.test',
+            'student_id_number' => '24-0832',
+        ])->assertRedirect();
+
+        $this->assertDatabaseHas('document', [
+            'field_name' => 'student_id_number',
+            'field_value' => '24-0832',
+        ]);
+
+        $this->from('/document-request')
+            ->post('/document-request', [
+                'document_type_id' => $documentType->id,
+                'full_name' => 'Taylor Student',
+                'email' => 'taylor@example.test',
+                'student_id_number' => '4-0832',
+            ])
+            ->assertRedirect('/document-request')
+            ->assertSessionHasErrors('student_id_number');
+
+        $this->assertDatabaseCount('document', 1);
+    }
+
+    public function test_admin_cannot_save_an_id_format_with_unsupported_characters(): void
+    {
+        $admin = Admin::create([
+            'name' => 'Portal Administrator',
+            'email' => 'admin@example.test',
+            'password_hash' => 'not-used',
+        ]);
+
+        $documentType = DocumentType::create([
+            'name' => 'Scholarship Request',
+            'description' => 'Scholarship form',
+            'is_active' => true,
+        ]);
+
+        $this->actingAs($admin, 'admin')
+            ->from(route('admin.document-types.edit', $documentType))
+            ->post(route('admin.document-types.fields.add', $documentType), [
+                'field_label' => 'Student ID Number',
+                'field_type' => 'text',
+                'validation_rules' => 'id:##-####!',
+            ])
+            ->assertRedirect(route('admin.document-types.edit', $documentType))
+            ->assertSessionHasErrors('validation_rules');
+
+        $this->assertDatabaseMissing('document_type_fields', [
+            'document_type_id' => $documentType->id,
+            'field_name' => 'student_id_number',
         ]);
     }
 
@@ -433,7 +563,64 @@ class DocumentRequestFormTest extends TestCase
         ]);
     }
 
-    public function test_admin_document_requests_live_endpoint_returns_latest_rows(): void
+    public function test_admin_document_requests_are_separated_into_pending_and_processed_sections(): void
+    {
+        $admin = Admin::create([
+            'name' => 'Portal Administrator',
+            'email' => 'admin@example.test',
+            'password_hash' => 'not-used',
+        ]);
+
+        $user = User::create([
+            'name' => 'Taylor Student',
+            'email' => 'taylor@example.test',
+        ]);
+
+        $documentType = DocumentType::create([
+            'name' => 'Clearance Request',
+            'description' => 'Clearance form',
+            'is_active' => true,
+        ]);
+
+        $pendingRequest = DocumentRequest::create([
+            'user_id' => $user->id,
+            'document_type_id' => $documentType->id,
+            'status' => 'pending',
+        ]);
+
+        $processedRequests = collect(['review', 'approved', 'ready', 'rejected'])
+            ->map(fn (string $status): DocumentRequest => DocumentRequest::create([
+                'user_id' => $user->id,
+                'document_type_id' => $documentType->id,
+                'status' => $status,
+            ]));
+
+        $this->actingAs($admin, 'admin')
+            ->get(route('admin.documents'))
+            ->assertSeeText('Pending Requests')
+            ->assertSeeText('Processed Requests')
+            ->assertSee("Request #{$pendingRequest->request_id}")
+            ->assertSee("Request #{$processedRequests->first()->request_id}");
+
+        $response = $this->actingAs($admin, 'admin')
+            ->getJson(route('admin.documents.live'))
+            ->assertOk()
+            ->assertJsonPath('pending_count', 1)
+            ->assertJsonPath('processed_count', 4);
+
+        $pendingHtml = $response->json('pending_html');
+        $processedHtml = $response->json('processed_html');
+        $this->assertStringContainsString("Request #{$pendingRequest->request_id}", $pendingHtml);
+        $this->assertStringNotContainsString("Request #{$processedRequests->first()->request_id}", $pendingHtml);
+        $this->assertStringContainsString("Request #{$processedRequests->first()->request_id}", $processedHtml);
+        $this->assertStringNotContainsString("Request #{$pendingRequest->request_id}", $processedHtml);
+
+        foreach ($processedRequests as $processedRequest) {
+            $this->assertStringContainsString("Request #{$processedRequest->request_id}", $processedHtml);
+        }
+    }
+
+    public function test_admin_document_review_shows_success_modal_after_saving_a_status(): void
     {
         $admin = Admin::create([
             'name' => 'Portal Administrator',
@@ -458,13 +645,25 @@ class DocumentRequestFormTest extends TestCase
             'status' => 'pending',
         ]);
 
-        $this->actingAs($admin, 'admin')
-            ->getJson(route('admin.documents.live'))
+        $response = $this->actingAs($admin, 'admin')
+            ->followingRedirects()
+            ->patch(route('admin.documents.update', $documentRequest), [
+                'status' => 'approved',
+            ])
             ->assertOk()
-            ->assertJsonPath('count', 1)
-            ->assertSee('Taylor Student')
-            ->assertSee('Clearance Request')
-            ->assertSee("Request #{$documentRequest->request_id}");
+            ->assertSee('id="success-modal"', false)
+            ->assertSee('role="dialog"', false)
+            ->assertSeeText('Changes Saved')
+            ->assertSeeText('Document review saved.')
+            ->assertSee('onclick="closeSuccessModal()"', false);
+
+        $this->assertSame(1, substr_count($response->getContent(), 'Document review saved.'));
+
+        $this->assertDatabaseHas('document_requests', [
+            'request_id' => $documentRequest->request_id,
+            'status' => 'approved',
+            'reviewed_by' => $admin->admin_id,
+        ]);
     }
 
     public function test_admin_can_review_document_request_details_with_saved_feedback(): void
@@ -710,6 +909,73 @@ class DocumentRequestFormTest extends TestCase
         $this->assertDatabaseHas('document', [
             'field_name' => 'request_purpose',
             'field_value' => 'Other: Student Council Election Requirement',
+        ]);
+    }
+
+    public function test_document_request_form_accepts_a_program_from_a_grouped_select(): void
+    {
+        $documentType = DocumentType::create([
+            'name' => 'Enrollment Request',
+            'description' => 'Enrollment form',
+            'is_active' => true,
+        ]);
+
+        DocumentTypeField::create([
+            'document_type_id' => $documentType->id,
+            'field_name' => 'college_program',
+            'field_label' => 'College / Program',
+            'field_type' => 'select',
+            'field_options' => ['College of Engineering > Bachelor of Science in Information Technology'],
+            'is_required' => true,
+            'display_order' => 1,
+        ]);
+
+        $this->getJson(route('document-types.fields', $documentType))
+            ->assertJsonPath('2.field_options.0', 'College of Engineering > Bachelor of Science in Information Technology');
+
+        $this->post('/document-request', [
+            'document_type_id' => $documentType->id,
+            'full_name' => 'Taylor Student',
+            'email' => 'taylor@example.test',
+            'college_program' => 'Bachelor of Science in Information Technology',
+        ])->assertRedirect();
+
+        $this->assertDatabaseHas('document', [
+            'field_name' => 'college_program',
+            'field_value' => 'Bachelor of Science in Information Technology',
+        ]);
+    }
+
+    public function test_document_request_form_rejects_a_college_name_as_a_select_value(): void
+    {
+        $documentType = DocumentType::create([
+            'name' => 'Enrollment Request',
+            'description' => 'Enrollment form',
+            'is_active' => true,
+        ]);
+
+        DocumentTypeField::create([
+            'document_type_id' => $documentType->id,
+            'field_name' => 'college_program',
+            'field_label' => 'College / Program',
+            'field_type' => 'select',
+            'field_options' => ['College of Engineering > Bachelor of Science in Information Technology'],
+            'is_required' => true,
+            'display_order' => 1,
+        ]);
+
+        $this->from('/document-request')
+            ->post('/document-request', [
+                'document_type_id' => $documentType->id,
+                'full_name' => 'Taylor Student',
+                'email' => 'taylor@example.test',
+                'college_program' => 'College of Engineering',
+            ])
+            ->assertRedirect('/document-request')
+            ->assertSessionHasErrors('college_program');
+
+        $this->assertDatabaseMissing('document', [
+            'field_name' => 'college_program',
         ]);
     }
 

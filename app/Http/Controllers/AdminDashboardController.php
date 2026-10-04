@@ -10,7 +10,6 @@ use App\Models\DocumentRequest;
 use App\Models\EmailNotification;
 use App\Models\Event;
 use App\Models\LostFoundItem;
-use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\JsonResponse;
@@ -49,17 +48,27 @@ class AdminDashboardController extends Controller
     public function documents(): View
     {
         return view('admin.documents', [
-            'requests' => $this->latestDocumentRequests()->paginate(15),
+            'pendingRequests' => $this->pendingDocumentRequests(),
+            'processedRequests' => $this->processedDocumentRequests(),
         ]);
     }
 
     public function liveDocuments(): JsonResponse
     {
-        $requests = $this->latestDocumentRequests()->limit(15)->get();
+        $pendingRequests = $this->pendingDocumentRequests();
+        $processedRequests = $this->processedDocumentRequests();
 
         return response()->json([
-            'html' => view('admin.partials.document-request-rows', compact('requests'))->render(),
-            'count' => $requests->count(),
+            'pending_html' => view('admin.partials.document-request-list', [
+                'requests' => $pendingRequests,
+                'emptyMessage' => 'No pending document requests.',
+            ])->render(),
+            'processed_html' => view('admin.partials.document-request-list', [
+                'requests' => $processedRequests,
+                'emptyMessage' => 'No processed document requests yet.',
+            ])->render(),
+            'pending_count' => $pendingRequests->count(),
+            'processed_count' => $processedRequests->count(),
         ]);
     }
 
@@ -427,10 +436,20 @@ class AdminDashboardController extends Controller
         return $configuredDisk;
     }
 
-    private function latestDocumentRequests(): Builder
+    private function pendingDocumentRequests(): Collection
     {
-        return DocumentRequest::with(['user', 'fields', 'reviewer', 'documentType'])
-            ->latest('request_id');
+        return DocumentRequest::with(['user', 'documentType'])
+            ->where('status', 'pending')
+            ->latest('request_id')
+            ->get();
+    }
+
+    private function processedDocumentRequests(): Collection
+    {
+        return DocumentRequest::with(['user', 'documentType'])
+            ->where('status', '!=', 'pending')
+            ->latest('request_id')
+            ->get();
     }
 
     private function pendingLostFoundItems(): Collection
