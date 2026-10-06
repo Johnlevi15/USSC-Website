@@ -163,9 +163,10 @@ class AdminDashboardController extends Controller
     {
         return view('admin.events', [
             'events' => Event::with('creator')
-                ->orderBy('event_date')
-                ->orderBy('start_time')
-                ->paginate(15),
+                ->orderByDesc('event_date')
+                ->orderByDesc('start_time')
+                ->orderByDesc('event_id')
+                ->paginate(5),
         ]);
     }
 

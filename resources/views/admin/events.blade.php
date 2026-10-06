@@ -104,7 +104,24 @@
         </div>
 
         @if($events->hasPages())
-            <div class="border-t p-4">{{ $events->links() }}</div>
+            <div class="flex items-center justify-between border-t p-4">
+                @if($events->currentPage() > 1)
+                    <a href="{{ $events->previousPageUrl() }}"
+                       class="inline-flex items-center rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-bold text-gray-700 hover:bg-gray-50">
+                        Previous events
+                    </a>
+                @else
+                    <span></span>
+                @endif
+
+                @if($events->hasMorePages())
+                    <a href="{{ $events->nextPageUrl() }}"
+                       class="inline-flex items-center rounded-lg bg-red-900 px-4 py-2 text-sm font-bold text-white hover:bg-red-800">
+                        See more events
+                        <i class="fa-solid fa-arrow-right ml-2"></i>
+                    </a>
+                @endif
+            </div>
         @endif
     </section>
 </div>

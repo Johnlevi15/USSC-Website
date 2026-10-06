@@ -72,4 +72,50 @@ class EventCalendarTest extends TestCase
             ->assertSee('data-confirm-message="Delete Campus Fair? It will also disappear from the student calendar."', false)
             ->assertDontSee('confirm(\'Delete this event?');
     }
+
+    public function test_admin_events_are_ordered_newest_first_and_paginated_in_groups_of_five(): void
+    {
+        $admin = Admin::create([
+            'name' => 'Calendar Admin',
+            'email' => 'calendar-admin@example.test',
+            'password_hash' => 'unused',
+        ]);
+
+        foreach (range(1, 7) as $day) {
+            Event::create([
+                'title' => "Campus Event {$day}",
+                'event_date' => sprintf('2026-10-%02d', $day),
+                'start_time' => '09:00',
+                'end_time' => '10:00',
+                'created_by' => $admin->admin_id,
+            ]);
+        }
+
+        $firstPage = $this->actingAs($admin, 'admin')
+            ->get(route('admin.events'));
+        $firstPageContent = $firstPage->getContent();
+        $firstPage
+            ->assertOk()
+            ->assertSee('Campus Event 7')
+            ->assertSee('Campus Event 6')
+            ->assertSee('Campus Event 5')
+            ->assertSee('Campus Event 4')
+            ->assertSee('Campus Event 3')
+            ->assertDontSee('Campus Event 2')
+            ->assertDontSee('Campus Event 1')
+            ->assertSee('See more events')
+            ->assertSee(route('admin.events', ['page' => 2]), false);
+
+        $this->assertTrue(strpos($firstPageContent, 'Campus Event 7') < strpos($firstPageContent, 'Campus Event 6'));
+        $this->assertTrue(strpos($firstPageContent, 'Campus Event 6') < strpos($firstPageContent, 'Campus Event 5'));
+
+        $this->get(route('admin.events', ['page' => 2]))
+            ->assertOk()
+            ->assertSee('Campus Event 2')
+            ->assertSee('Campus Event 1')
+            ->assertDontSee('Campus Event 7')
+            ->assertDontSee('See more events')
+            ->assertSee('Previous events')
+            ->assertDontSee(route('admin.events', ['page' => 3]), false);
+    }
 }
