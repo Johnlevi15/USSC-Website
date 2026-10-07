@@ -1,36 +1,40 @@
 @extends('layouts.admin')
 @section('title', 'Edit Document Type | USSC Admin')
 @section('content')
-<div class="max-w-3xl space-y-6">
-    <h1 class="break-words text-2xl font-bold">Edit: {{ $documentType->name }}</h1>
+<div class="w-full">
+    <h1 class="mb-6 break-words text-2xl font-bold">Edit: {{ $documentType->name }}</h1>
 
-    {{-- Document Type Info --}}
-    <form method="POST" action="{{ route('admin.document-types.update', $documentType) }}" class="space-y-4 rounded-lg border bg-white p-4 sm:p-6">
-        @csrf @method('PUT')
+    <div class="grid gap-6 xl:grid-cols-[minmax(0,1.4fr)_360px]">
+        <div class="space-y-6">
+            {{-- Document Type Info --}}
+            <form method="POST" action="{{ route('admin.document-types.update', $documentType) }}" class="space-y-4 rounded-lg border bg-white p-4 sm:p-6">
+                @csrf @method('PUT')
 
-        <label class="block text-xs font-bold text-gray-600 uppercase">
-            Name
-            <input required name="name" value="{{ old('name', $documentType->name) }}" class="mt-1 w-full rounded-lg border px-3 py-2 text-sm">
-        </label>
+                <label class="block text-xs font-bold text-gray-600 uppercase">
+                    Name
+                    <input required name="name" value="{{ old('name', $documentType->name) }}" class="mt-1 w-full rounded-lg border px-3 py-2 text-sm">
+                </label>
 
-        <label class="block text-xs font-bold text-gray-600 uppercase">
-            Description
-            <textarea name="description" rows="3" class="mt-1 w-full rounded-lg border px-3 py-2 text-sm">{{ old('description', $documentType->description) }}</textarea>
-        </label>
+                <label class="block text-xs font-bold text-gray-600 uppercase">
+                    Description
+                    <textarea name="description" rows="3" class="mt-1 w-full rounded-lg border px-3 py-2 text-sm">{{ old('description', $documentType->description) }}</textarea>
+                </label>
 
-        <label class="flex items-center gap-2 text-sm font-semibold text-gray-700">
-            <input type="checkbox" name="is_active" value="1" {{ old('is_active', $documentType->is_active) ? 'checked' : '' }} class="rounded">
-            Active (shown to users)
-        </label>
+                <label class="flex items-center gap-2 text-sm font-semibold text-gray-700">
+                    <input type="checkbox" name="is_active" value="1" {{ old('is_active', $documentType->is_active) ? 'checked' : '' }} class="rounded">
+                    Active (shown to users)
+                </label>
 
-        <div class="flex flex-col-reverse gap-2 pt-2 sm:flex-row sm:items-center">
-            <a href="{{ route('admin.document-types.index') }}" class="inline-flex justify-center rounded-lg border px-4 py-2 text-sm font-semibold hover:bg-gray-50">Cancel</a>
-            <button class="rounded-lg bg-red-900 px-4 py-2 text-sm font-semibold text-white hover:bg-red-800">Save Changes</button>
+                <div class="flex flex-col-reverse gap-2 pt-2 sm:flex-row sm:items-center">
+                    <a href="{{ route('admin.document-types.index') }}" class="inline-flex justify-center rounded-lg border px-4 py-2 text-sm font-semibold hover:bg-gray-50">Cancel</a>
+                    <button class="rounded-lg bg-red-900 px-4 py-2 text-sm font-semibold text-white hover:bg-red-800">Save Changes</button>
+                </div>
+            </form>
         </div>
-    </form>
 
-    {{-- Fields Management --}}
-    <div class="rounded-lg border bg-white p-4 sm:p-6">
+        <aside class="space-y-6 xl:sticky xl:top-6 xl:self-start">
+            {{-- Fields Management --}}
+            <div class="rounded-lg border bg-white p-4 sm:p-6">
         <h2 class="text-lg font-bold mb-4">Form Fields</h2>
 
         @if($documentType->fields->isEmpty())
@@ -233,6 +237,7 @@
                 </button>
             </form>
         </div>
+        </aside>
     </div>
 </div>
 

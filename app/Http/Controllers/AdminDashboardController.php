@@ -34,10 +34,13 @@ class AdminDashboardController extends Controller
                 ->whereIn('status', ['lost', 'found'])
                 ->whereNull('archived_at')
                 ->count(),
-            'monthlyEvents' => Event::whereBetween('event_date', [now()->startOfMonth(), now()->endOfMonth()])->count(),
+            'monthlyEvents' => Event::active()
+                ->whereBetween('event_date', [now()->startOfMonth(), now()->endOfMonth()])
+                ->count(),
             'recentDocuments' => DocumentRequest::with(['user', 'fields', 'documentType'])->latest('request_id')->limit(5)->get(),
             'recentItems' => LostFoundItem::with('poster')->whereNull('archived_at')->latest('item_id')->limit(5)->get(),
-            'upcomingEvents' => Event::whereDate('event_date', '>=', today())
+            'upcomingEvents' => Event::active()
+                ->whereDate('event_date', '>=', today())
                 ->orderBy('event_date')
                 ->orderBy('start_time')
                 ->limit(5)
@@ -163,8 +166,20 @@ class AdminDashboardController extends Controller
     {
         return view('admin.events', [
             'events' => Event::with('creator')
+                ->active()
                 ->orderByDesc('event_date')
                 ->orderByDesc('start_time')
+                ->orderByDesc('event_id')
+                ->paginate(5),
+        ]);
+    }
+
+    public function archivedEvents(): View
+    {
+        return view('admin.events-archive', [
+            'events' => Event::with(['creator', 'archiver'])
+                ->whereNotNull('archived_at')
+                ->orderByDesc('archived_at')
                 ->orderByDesc('event_id')
                 ->paginate(5),
         ]);
@@ -401,16 +416,28 @@ class AdminDashboardController extends Controller
         return redirect()->route('admin.events')->with('success', 'Event updated successfully.');
     }
 
-    public function destroyEvent(Request $request, Event $event): RedirectResponse
+    public function archiveEvent(Request $request, Event $event): RedirectResponse
     {
-        $eventTitle = $event->title;
+        $event->update([
+            'archived_at' => now(),
+            'archived_by' => $this->adminId($request),
+        ]);
 
-        // Record the action before deleting so the event still exists when the log is created.
-        $this->record($request, 'event_deleted', "Deleted event: {$eventTitle}.", $event);
+        $this->record($request, 'event_archived', "Archived event: {$event->title}.", $event);
 
-        $event->delete();
+        return redirect()->route('admin.events')->with('success', 'Event archived from the student calendar.');
+    }
 
-        return redirect()->route('admin.events')->with('success', 'Event deleted from the student calendar.');
+    public function restoreEvent(Request $request, Event $event): RedirectResponse
+    {
+        $event->update([
+            'archived_at' => null,
+            'archived_by' => null,
+        ]);
+
+        $this->record($request, 'event_restored', "Restored event: {$event->title}.", $event);
+
+        return redirect()->route('admin.events.archive')->with('success', 'Event restored to the student calendar.');
     }
 
     private function record(Request $request, string $action, string $description, Model $subject): void

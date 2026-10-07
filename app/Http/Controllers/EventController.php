@@ -25,7 +25,7 @@ class EventController extends Controller
         $calendarStart = $month->copy()->startOfWeek(Carbon::SUNDAY);
         $calendarEnd = $month->copy()->endOfMonth()->endOfWeek(Carbon::SATURDAY);
         $events = Schema::hasTable('events')
-            ? Event::query()
+            ? Event::active()
                 ->whereBetween('event_date', [$month->toDateString(), $month->copy()->endOfMonth()->toDateString()])
                 ->orderBy('event_date')
                 ->orderBy('start_time')
@@ -43,7 +43,7 @@ class EventController extends Controller
 
     public function index(): JsonResponse
     {
-        return response()->json(Event::with(['creator', 'calendars'])->get());
+        return response()->json(Event::active()->with(['creator', 'calendars'])->get());
     }
 
     public function store(Request $request): JsonResponse

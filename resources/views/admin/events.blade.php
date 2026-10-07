@@ -4,6 +4,10 @@
 <div>
     <h2 class="text-2xl font-extrabold text-gray-900">Calendar Events</h2>
     <p class="text-sm text-gray-500">Publish and manage events that appear on the student portal calendar.</p>
+    <a href="{{ route('admin.events.archive') }}" class="mt-2 inline-flex items-center gap-2 text-xs font-bold text-red-900 hover:underline">
+        <i class="fa-solid fa-box-archive"></i>
+        View archived events
+    </a>
 </div>
 
 <div class="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,380px)_1fr]">
@@ -47,7 +51,7 @@
     <section class="rounded-xl border border-gray-200 bg-white shadow-sm">
         <div class="border-b p-5">
             <h3 class="font-bold">Published Events</h3>
-            <p class="mt-1 text-xs text-gray-500">Edit event information or remove events that should no longer appear on the student portal.</p>
+            <p class="mt-1 text-xs text-gray-500">Edit event information or archive events that should no longer appear on the student portal.</p>
         </div>
 
         <div class="divide-y">
@@ -83,16 +87,16 @@
                             </a>
 
                             <form method="POST"
-                                  action="{{ route('admin.events.destroy', $event) }}"
-                                  data-confirm-title="Delete event?"
-                                  data-confirm-message="Delete {{ $event->title }}? It will also disappear from the student calendar."
-                                  data-confirm-button="Delete event">
+                                  action="{{ route('admin.events.archive.store', $event) }}"
+                                  data-confirm-title="Archive event?"
+                                  data-confirm-message="Archive {{ $event->title }}? It will be hidden from the student calendar and can be restored later."
+                                  data-confirm-button="Archive event">
                                 @csrf
-                                @method('DELETE')
+                                @method('PATCH')
                                 <button type="submit"
-                                        class="inline-flex w-full items-center justify-center gap-1.5 rounded-lg bg-red-700 px-3 py-2 text-xs font-bold text-white hover:bg-red-800">
-                                    <i class="fa-solid fa-trash"></i>
-                                    Delete
+                                        class="inline-flex w-full items-center justify-center gap-1.5 rounded-lg border border-gray-300 bg-white px-3 py-2 text-xs font-bold text-gray-700 hover:bg-gray-50">
+                                    <i class="fa-solid fa-box-archive"></i>
+                                    Archive
                                 </button>
                             </form>
                         </div>

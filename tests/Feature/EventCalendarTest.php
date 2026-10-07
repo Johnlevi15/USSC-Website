@@ -49,7 +49,7 @@ class EventCalendarTest extends TestCase
             ->assertSessionHasErrors('month');
     }
 
-    public function test_admin_event_deletion_uses_the_admin_confirmation_modal(): void
+    public function test_admin_event_archiving_uses_the_admin_confirmation_modal(): void
     {
         $admin = Admin::create([
             'name' => 'Calendar Admin',
@@ -68,9 +68,69 @@ class EventCalendarTest extends TestCase
         $this->actingAs($admin, 'admin')
             ->get(route('admin.events'))
             ->assertSee('id="admin-action-confirm-modal"', false)
-            ->assertSee('data-confirm-title="Delete event?"', false)
-            ->assertSee('data-confirm-message="Delete Campus Fair? It will also disappear from the student calendar."', false)
-            ->assertDontSee('confirm(\'Delete this event?');
+            ->assertSee('data-confirm-title="Archive event?"', false)
+            ->assertSee('data-confirm-message="Archive Campus Fair? It will be hidden from the student calendar and can be restored later."', false)
+            ->assertSeeText('Archive')
+            ->assertDontSeeText('Delete');
+    }
+
+    public function test_admin_can_archive_and_restore_an_event_without_deleting_it(): void
+    {
+        $admin = Admin::create([
+            'name' => 'Calendar Admin',
+            'email' => 'calendar-admin@example.test',
+            'password_hash' => 'unused',
+        ]);
+
+        $event = Event::create([
+            'title' => 'Campus Fair',
+            'event_date' => '2026-10-15',
+            'start_time' => '09:00',
+            'end_time' => '16:00',
+            'created_by' => $admin->admin_id,
+        ]);
+
+        $this->actingAs($admin, 'admin')
+            ->patch(route('admin.events.archive.store', $event))
+            ->assertRedirect(route('admin.events'))
+            ->assertSessionHas('success', 'Event archived from the student calendar.');
+
+        $this->assertModelExists($event->fresh());
+        $this->assertSame($admin->admin_id, $event->fresh()->archived_by);
+        $this->assertNotNull($event->fresh()->archived_at);
+        $this->assertDatabaseHas('admin_activity_logs', [
+            'action' => 'event_archived',
+            'subject_id' => $event->event_id,
+        ]);
+
+        $this->actingAs($admin, 'admin')
+            ->get(route('admin.events'))
+            ->assertDontSeeText('Campus Fair');
+        $this->get(route('admin.events.archive'))
+            ->assertSeeText('Campus Fair')
+            ->assertSeeText('Restore');
+        $this->getJson(route('events.index'))
+            ->assertOk()
+            ->assertJsonMissing(['title' => 'Campus Fair']);
+        $this->get('/?month=2026-10')
+            ->assertDontSee('Campus Fair');
+
+        $this->patch(route('admin.events.restore', $event))
+            ->assertRedirect(route('admin.events.archive'))
+            ->assertSessionHas('success', 'Event restored to the student calendar.');
+
+        $this->assertNull($event->fresh()->archived_at);
+        $this->assertNull($event->fresh()->archived_by);
+        $this->assertDatabaseHas('admin_activity_logs', [
+            'action' => 'event_restored',
+            'subject_id' => $event->event_id,
+        ]);
+
+        $this->get('/?month=2026-10')
+            ->assertSee('Campus Fair');
+        $this->getJson(route('events.index'))
+            ->assertOk()
+            ->assertJsonFragment(['title' => 'Campus Fair']);
     }
 
     public function test_admin_events_are_ordered_newest_first_and_paginated_in_groups_of_five(): void

@@ -1,7 +1,7 @@
 @extends('layouts.admin')
 @section('title', 'Document Types | USSC Admin')
 @section('content')
-<div class="max-w-4xl">
+<div class="w-full min-h-[calc(100vh-15rem)]">
     <div class="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <h1 class="text-2xl font-bold">Document Types</h1>
         <a href="{{ route('admin.document-types.create') }}" class="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-red-900 px-4 py-2 text-sm font-semibold text-white hover:bg-red-800 sm:w-auto">

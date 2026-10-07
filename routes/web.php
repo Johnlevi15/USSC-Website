@@ -98,10 +98,12 @@ Route::middleware(['auth:admin', 'admin', 'admin.no-cache'])->group(function ():
     Route::patch('/admin/lost-found/{lostFoundItem}', [AdminDashboardController::class, 'updateLostFound'])->name('admin.lost-found.update');
 
     Route::get('/admin/events', [AdminDashboardController::class, 'events'])->name('admin.events');
+    Route::get('/admin/events/archive', [AdminDashboardController::class, 'archivedEvents'])->name('admin.events.archive');
     Route::post('/admin/events', [AdminDashboardController::class, 'storeEvent'])->name('admin.events.store');
     Route::get('/admin/events/{event}/edit', [AdminDashboardController::class, 'editEvent'])->name('admin.events.edit');
     Route::put('/admin/events/{event}', [AdminDashboardController::class, 'updateEvent'])->name('admin.events.update');
-    Route::delete('/admin/events/{event}', [AdminDashboardController::class, 'destroyEvent'])->name('admin.events.destroy');
+    Route::patch('/admin/events/{event}/archive', [AdminDashboardController::class, 'archiveEvent'])->name('admin.events.archive.store');
+    Route::patch('/admin/events/{event}/restore', [AdminDashboardController::class, 'restoreEvent'])->name('admin.events.restore');
 
     Route::get('/admin/logs', [AdminDashboardController::class, 'logs'])->name('admin.logs');
 

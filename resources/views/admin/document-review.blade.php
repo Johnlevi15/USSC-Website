@@ -165,7 +165,6 @@
                     <label for="status" class="mb-1.5 block text-xs font-bold uppercase tracking-wide text-gray-600">Request Status</label>
                     <select id="status" name="status" class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm outline-none focus:border-red-800 focus:ring-2 focus:ring-red-100">
                         <option value="pending" @selected(old('status', $documentRequest->status) === 'pending')>Pending</option>
-                        <option value="review" @selected(old('status', $documentRequest->status) === 'review')>Under Review</option>
                         <option value="approved" @selected(old('status', $documentRequest->status) === 'approved')>Approved</option>
                         <option value="ready" @selected(old('status', $documentRequest->status) === 'ready')>Ready for Pickup</option>
                         <option value="rejected" @selected(old('status', $documentRequest->status) === 'rejected')>Rejected</option>

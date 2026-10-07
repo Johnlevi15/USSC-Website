@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
@@ -14,11 +15,19 @@ class Event extends Model
 
     public $timestamps = false;
 
-    protected $fillable = ['title', 'description', 'event_date', 'start_time', 'end_time', 'created_by'];
+    protected $fillable = ['title', 'description', 'event_date', 'start_time', 'end_time', 'created_by', 'archived_at', 'archived_by'];
 
     protected function casts(): array
     {
-        return ['event_date' => 'date'];
+        return [
+            'event_date' => 'date',
+            'archived_at' => 'datetime',
+        ];
+    }
+
+    public function scopeActive(Builder $query): void
+    {
+        $query->whereNull('archived_at');
     }
 
     public function creator(): BelongsTo
@@ -30,5 +39,10 @@ class Event extends Model
     {
         return $this->belongsToMany(Admin::class, 'event_calendar', 'event_id', 'admin_id')
             ->withPivot(['calendar_date', 'view_type']);
+    }
+
+    public function archiver(): BelongsTo
+    {
+        return $this->belongsTo(Admin::class, 'archived_by', 'admin_id');
     }
 }

@@ -33,11 +33,53 @@ class DocumentTypeController extends Controller
             'name' => ['required', 'string', 'max:150'],
             'description' => ['nullable', 'string'],
             'is_active' => ['sometimes', 'boolean'],
+            'field_draft_json' => ['nullable', 'json'],
         ]);
 
         $validated['is_active'] = $request->boolean('is_active');
 
-        DocumentType::create($validated);
+        $documentType = DocumentType::create($validated);
+
+        $draftFields = json_decode((string) $request->input('field_draft_json', '[]'), true);
+        if (is_array($draftFields)) {
+            foreach ($draftFields as $index => $fieldDraft) {
+                if (! is_array($fieldDraft) || ! isset($fieldDraft['field_label']) || trim((string) $fieldDraft['field_label']) === '') {
+                    continue;
+                }
+
+                $fieldDetails = [
+                    'field_label' => trim((string) $fieldDraft['field_label']),
+                    'field_type' => $fieldDraft['field_type'] ?? 'text',
+                    'field_options' => $fieldDraft['field_options'] ?? null,
+                    'is_required' => (bool) ($fieldDraft['is_required'] ?? false),
+                    'validation_rules' => $fieldDraft['validation_rules'] ?? null,
+                ];
+
+                $fieldDetails['field_options'] = $this->fieldOptions([
+                    'field_type' => $fieldDetails['field_type'],
+                    'field_options' => $fieldDetails['field_options'],
+                ]);
+                $fieldDetails['validation_rules'] = $this->validationRules(
+                    $fieldDetails['validation_rules'],
+                    $fieldDetails['field_type'],
+                );
+
+                $fieldName = $this->fieldName(null, $fieldDetails['field_label'], $documentType);
+                if ($this->isBaseField($fieldName, $fieldDetails['field_label'])) {
+                    continue;
+                }
+
+                $documentType->fields()->create([
+                    'field_name' => $fieldName,
+                    'field_label' => $fieldDetails['field_label'],
+                    'field_type' => $fieldDetails['field_type'],
+                    'field_options' => $fieldDetails['field_options'],
+                    'is_required' => $fieldDetails['is_required'],
+                    'validation_rules' => $fieldDetails['validation_rules'],
+                    'display_order' => $documentType->fields()->max('display_order') + 1,
+                ]);
+            }
+        }
 
         return redirect()->route('admin.document-types.index')
             ->with('success', 'Document type created successfully.');
