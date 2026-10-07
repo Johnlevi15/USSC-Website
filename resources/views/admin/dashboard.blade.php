@@ -16,13 +16,13 @@
         ['label' => 'Lost & Found Items', 'value' => $unclaimedItems, 'icon' => 'fa-hand-holding-hand', 'color' => 'red'],
         ['label' => 'Events This Month', 'value' => $monthlyEvents, 'icon' => 'fa-calendar-days', 'color' => 'blue'],
     ] as $stat)
-        <div class="flex items-center justify-between rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+        <div class="flex min-h-32 items-center justify-between rounded-xl border border-gray-200 bg-white p-5 shadow-sm sm:p-6">
             <div>
-                <p class="text-[11px] font-bold uppercase tracking-wider text-gray-400">{{ $stat['label'] }}</p>
-                <p class="mt-1 text-2xl font-extrabold text-gray-800">{{ $stat['value'] }}</p>
+                <p class="text-xs font-bold uppercase tracking-wider text-gray-500">{{ $stat['label'] }}</p>
+                <p class="mt-2 text-4xl font-black leading-none tracking-tight text-gray-900 sm:text-5xl">{{ $stat['value'] }}</p>
             </div>
-            <div class="flex h-11 w-11 items-center justify-center rounded-xl bg-{{ $stat['color'] }}-50 text-{{ $stat['color'] }}-600">
-                <i class="fa-solid {{ $stat['icon'] }}"></i>
+            <div class="flex h-14 w-14 items-center justify-center rounded-2xl bg-{{ $stat['color'] }}-100 text-{{ $stat['color'] }}-700 sm:h-16 sm:w-16">
+                <i class="fa-solid {{ $stat['icon'] }} text-xl sm:text-2xl"></i>
             </div>
         </div>
     @endforeach
@@ -37,7 +37,17 @@
         <div class="divide-y">
             @forelse($recentDocuments as $request)
                 <a href="{{ route('admin.documents.review', $request) }}" class="flex items-center justify-between gap-3 p-4 text-sm hover:bg-gray-50">
-                    <div><p class="font-bold">{{ $request->user?->name ?? 'Unknown user' }}</p><p class="text-xs text-gray-500">{{ $request->documentType?->name ?? 'Unknown type' }}</p></div>
+                    <div class="min-w-0">
+                        <p class="truncate font-bold">{{ $request->user?->name ?? 'Unknown user' }}</p>
+                        <p class="text-xs text-gray-500">{{ $request->documentType?->name ?? 'Unknown type' }}</p>
+                        <p class="mt-1 text-[11px] text-gray-400">
+                            Submitted {{ $request->submitted_at?->diffForHumans() ?? 'at an unknown time' }}
+                            @if($request->submitted_at)
+                                <span aria-hidden="true">·</span>
+                                <time datetime="{{ $request->submitted_at->toIso8601String() }}">{{ $request->submitted_at->format('M j, Y g:i A') }}</time>
+                            @endif
+                        </p>
+                    </div>
                     <span @class([
                         'rounded-full px-2 py-1 text-[10px] font-bold uppercase',
                         'bg-green-100 text-green-800' => $request->status === 'ready',
@@ -59,10 +69,21 @@
         </div>
         <div class="divide-y">
             @forelse($recentItems as $item)
-                <div class="flex items-center justify-between gap-3 p-4 text-sm">
-                    <div><p class="font-bold">{{ $item->item_name }}</p><p class="text-xs text-gray-500">{{ $item->place }}</p></div>
-                    <span class="rounded-full bg-red-100 px-2 py-1 text-[10px] font-bold uppercase text-red-800">{{ $item->status }}</span>
-                </div>
+                <a href="{{ route('admin.lost-found.review', $item) }}" class="flex items-center justify-between gap-3 p-4 text-sm hover:bg-gray-50">
+                    <div class="min-w-0">
+                        <p class="truncate font-bold">{{ $item->item_name }}</p>
+                        <p class="text-xs text-gray-500">{{ $item->place ?: 'Location not provided' }}</p>
+                        <p class="mt-1 text-xs text-gray-500">Reported by {{ $item->poster?->name ?? 'Unknown user' }}</p>
+                        <p class="mt-1 text-[11px] text-gray-400">
+                            Submitted {{ $item->submitted_at?->diffForHumans() ?? 'at an unknown time' }}
+                            @if($item->submitted_at)
+                                <span aria-hidden="true">·</span>
+                                <time datetime="{{ $item->submitted_at->toIso8601String() }}">{{ $item->submitted_at->format('M j, Y g:i A') }}</time>
+                            @endif
+                        </p>
+                    </div>
+                    <span class="shrink-0 rounded-full bg-red-100 px-2 py-1 text-[10px] font-bold uppercase text-red-800">{{ $item->status }}</span>
+                </a>
             @empty
                 <p class="p-6 text-center text-sm text-gray-500">No item reports yet.</p>
             @endforelse

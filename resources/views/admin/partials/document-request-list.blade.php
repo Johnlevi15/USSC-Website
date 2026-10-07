@@ -16,7 +16,15 @@
 
                 <h3 class="mt-2 font-bold">{{ $request->documentType?->name ?? 'Unknown type' }}</h3>
                 <p class="text-xs text-gray-500">{{ $request->user?->name ?? 'Unknown user' }} · {{ $request->user?->email }}</p>
-                <p class="mt-1 text-xs text-gray-400">Request #{{ $request->request_id }} · Submitted {{ $request->submitted_at?->format('M j, Y g:i A') ?? 'Unknown date' }}</p>
+                <p class="mt-1 text-xs text-gray-400">
+                    Request #{{ $request->request_id }}
+                    <span aria-hidden="true">·</span>
+                    Submitted {{ $request->submitted_at?->diffForHumans() ?? 'at an unknown time' }}
+                    @if($request->submitted_at)
+                        <span aria-hidden="true">·</span>
+                        <time datetime="{{ $request->submitted_at->toIso8601String() }}">{{ $request->submitted_at->format('M j, Y g:i A') }}</time>
+                    @endif
+                </p>
             </div>
 
             <a href="{{ route('admin.documents.review', $request) }}" class="inline-flex items-center gap-2 rounded-lg bg-red-900 px-4 py-2 text-xs font-bold text-white hover:bg-red-800">

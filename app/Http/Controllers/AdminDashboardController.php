@@ -37,8 +37,17 @@ class AdminDashboardController extends Controller
             'monthlyEvents' => Event::active()
                 ->whereBetween('event_date', [now()->startOfMonth(), now()->endOfMonth()])
                 ->count(),
-            'recentDocuments' => DocumentRequest::with(['user', 'fields', 'documentType'])->latest('request_id')->limit(5)->get(),
-            'recentItems' => LostFoundItem::with('poster')->whereNull('archived_at')->latest('item_id')->limit(5)->get(),
+            'recentDocuments' => DocumentRequest::with(['user', 'documentType'])
+                ->orderByDesc('submitted_at')
+                ->orderByDesc('request_id')
+                ->limit(5)
+                ->get(),
+            'recentItems' => LostFoundItem::with('poster')
+                ->whereNull('archived_at')
+                ->orderByDesc('submitted_at')
+                ->orderByDesc('item_id')
+                ->limit(5)
+                ->get(),
             'upcomingEvents' => Event::active()
                 ->whereDate('event_date', '>=', today())
                 ->orderBy('event_date')
@@ -468,7 +477,8 @@ class AdminDashboardController extends Controller
     {
         return DocumentRequest::with(['user', 'documentType'])
             ->where('status', 'pending')
-            ->latest('request_id')
+            ->orderByDesc('submitted_at')
+            ->orderByDesc('request_id')
             ->get();
     }
 
@@ -476,7 +486,8 @@ class AdminDashboardController extends Controller
     {
         return DocumentRequest::with(['user', 'documentType'])
             ->where('status', '!=', 'pending')
-            ->latest('request_id')
+            ->orderByDesc('submitted_at')
+            ->orderByDesc('request_id')
             ->get();
     }
 
